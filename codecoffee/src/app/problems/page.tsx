@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ProblemCard } from "@/components/problem-card"
+import { ProblemCard } from "@/components/Problem/problem-card"
 import { FilterBar } from "@/components/filter-bar"
 import { Skeleton } from "@/components/ui/skeleton"
 
