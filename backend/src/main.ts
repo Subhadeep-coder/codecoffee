@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
-import session from 'express-session';
+import * as session from 'express-session';
 import * as passport from 'passport';
 import { PrismaClient } from 'generated/prisma';
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
