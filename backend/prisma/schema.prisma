@@ -1,0 +1,337 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  username   String    @unique
+  password   String?
+  firstName  String
+  lastName   String
+  avatar     String?
+  bio        String?
+  rating     Int       @default(0)
+  points     Int       @default(0)
+  streak     Int       @default(0)
+  lastSolved DateTime?
+  isVerified Boolean   @default(false)
+
+  provider   AuthProvider @default(LOCAL)
+  providerId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  accounts              Account[]
+  problems              Problem[]
+  submissions           Submission[]
+  contests              Contest[]
+  contestParticipations ContestParticipation[]
+  problemReviews        ProblemReview[]
+  followers             Follow[]               @relation("UserFollowers")
+  following             Follow[]               @relation("UserFollowing")
+  leaderboardEntry      LeaderboardEntry[]
+
+  @@index([rating])
+  @@index([points])
+  @@index([provider, providerId])
+  @@map("users")
+}
+
+// OAuth accounts table
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+  DISCORD
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  sid       String   @unique
+  data      String   @db.Text
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sid])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// Problem Management
+model Problem {
+  id          String     @id @default(cuid())
+  title       String
+  description String     @db.Text
+  difficulty  Difficulty
+  tags        String[]
+  timeLimit   Int        @default(2000)
+  memoryLimit Int        @default(256)
+  isPublic    Boolean    @default(false)
+  isApproved  Boolean    @default(false)
+  createdById String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  createdBy       User             @relation(fields: [createdById], references: [id])
+  testCases       TestCase[]
+  boilerplates    Boilerplate[]
+  submissions     Submission[]
+  reviews         ProblemReview[]
+  contestProblems ContestProblem[]
+
+  @@index([difficulty])
+  @@index([isPublic, isApproved])
+  @@index([createdById])
+  @@map("problems")
+}
+
+model TestCase {
+  id        String  @id @default(cuid())
+  problemId String
+  input     String  @db.Text
+  output    String  @db.Text
+  isHidden  Boolean @default(false)
+  points    Int     @default(10)
+
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([problemId])
+  @@map("test_cases")
+}
+
+model Boilerplate {
+  id        String   @id @default(cuid())
+  problemId String
+  language  Language
+  code      String   @db.Text
+
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, language])
+  @@map("boilerplates")
+}
+
+// Contest Management
+model Contest {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  startTime   DateTime
+  endTime     DateTime
+  maxDuration Int?
+  isPublic    Boolean  @default(true)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  createdBy      User                   @relation(fields: [createdById], references: [id])
+  problems       ContestProblem[]
+  participations ContestParticipation[]
+
+  @@index([startTime, endTime])
+  @@index([isPublic])
+  @@map("contests")
+}
+
+model ContestProblem {
+  id        String @id @default(cuid())
+  contestId String
+  problemId String
+  points    Int    @default(100)
+  order     Int
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, problemId])
+  @@unique([contestId, order])
+  @@map("contest_problems")
+}
+
+model ContestParticipation {
+  id         String    @id @default(cuid())
+  contestId  String
+  userId     String
+  score      Int       @default(0)
+  rank       Int?
+  startTime  DateTime  @default(now())
+  endTime    DateTime?
+  isFinished Boolean   @default(false)
+
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([contestId, score])
+  @@map("contest_participations")
+}
+
+// Submission Management
+model Submission {
+  id            String           @id @default(cuid())
+  problemId     String
+  userId        String
+  contestId     String?
+  language      Language
+  code          String           @db.Text
+  status        SubmissionStatus
+  score         Int              @default(0)
+  executionTime Float?
+  memoryUsed    Int?
+  judge0Token   String?
+  createdAt     DateTime         @default(now())
+
+  // Relations
+  problem Problem            @relation(fields: [problemId], references: [id])
+  user    User               @relation(fields: [userId], references: [id])
+  results SubmissionResult[]
+
+  @@index([userId, problemId])
+  @@index([contestId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("submissions")
+}
+
+model SubmissionResult {
+  id            String  @id @default(cuid())
+  submissionId  String
+  testCaseId    String
+  status        String
+  executionTime Float?
+  memoryUsed    Int?
+  output        String? @db.Text
+  errorOutput   String? @db.Text
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@map("submission_results")
+}
+
+// Review System
+model ProblemReview {
+  id        String   @id @default(cuid())
+  problemId String
+  userId    String
+  rating    Int
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, userId])
+  @@index([problemId])
+  @@map("problem_reviews")
+}
+
+// Social Features
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+// Leaderboard Cache
+model LeaderboardEntry {
+  id        String          @id @default(cuid())
+  userId    String
+  type      LeaderboardType
+  period    String
+  score     Int
+  rank      Int
+  updatedAt DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, period])
+  @@index([type, period, rank])
+  @@map("leaderboard_entries")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum Language {
+  JAVASCRIPT
+  PYTHON
+  JAVA
+  CPP
+  C
+  CSHARP
+  GOLANG
+  RUST
+  KOTLIN
+  SWIFT
+}
+
+enum SubmissionStatus {
+  PENDING
+  PROCESSING
+  ACCEPTED
+  WRONG_ANSWER
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT_EXCEEDED
+  RUNTIME_ERROR
+  COMPILATION_ERROR
+  SYSTEM_ERROR
+}
+
+enum LeaderboardType {
+  POINTS
+  RATING
+  PROBLEMS_SOLVED
+}
