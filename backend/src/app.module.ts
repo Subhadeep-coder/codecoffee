@@ -8,9 +8,15 @@ import { JudgeModule } from './judge/judge.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { ReviewModule } from './review/review.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     AuthModule,
     ProblemsModule,
     UsersModule,
@@ -19,7 +25,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     JudgeModule,
     LeaderboardModule,
     ReviewModule,
-    NotificationsModule
+    NotificationsModule,
+    PrismaModule
   ],
 })
 export class AppModule { }
