@@ -1,15 +1,20 @@
-import { Zap, Link, ArrowRight } from "lucide-react"
+import Link from "next/link"
+import { Zap, ArrowRight } from "lucide-react"
 import { Button } from "../ui/button"
 
 export function HeroSection() {
     return (
-      <><section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+            {/* Animated background elements */}
             <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
                 <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000"></div>
                 <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-2000"></div>
             </div>
+            
+            {/* Grid pattern overlay */}
             <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3e%3cdefs%3e%3cpattern id=\'grid\' width=\'60\' height=\'60\' patternUnits=\'userSpaceOnUse\'%3e%3cpath d=\'m 60 0 l 0 60 l -60 0 z\' fill=\'none\' stroke=\'%23ffffff\' stroke-width=\'0.5\' opacity=\'0.1\'/%3e%3c/pattern%3e%3c/defs%3e%3crect width=\'100%25\' height=\'100%25\' fill=\'url(%23grid)\' /%3e%3c/svg%3e')] opacity-20"></div>
+            
             <div className="container relative z-10 px-4 md:px-6">
                 <div className="flex flex-col items-center space-y-8 text-center">
                     <div className="space-y-6">
@@ -73,7 +78,6 @@ export function HeroSection() {
                     </div>
                 </div>
             </div>
-      </section >
-      </>
+        </section>
     )
 }

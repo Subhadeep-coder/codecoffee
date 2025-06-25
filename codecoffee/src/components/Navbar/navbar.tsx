@@ -27,16 +27,15 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { useUser } from "@/lib/store/user"
 
 export function Navbar() {
   const { setTheme } = useTheme()
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  
-  // Mock authentication state - replace with your actual auth logic
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState(null)
-
+  const user = useUser((state) => state.user)
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
   const navItems = [
     {
       name: "Problems",
@@ -62,15 +61,11 @@ export function Navbar() {
   ]
 
   const handleSignIn = () => {
-    // Mock sign in - replace with your actual auth logic
-    setIsAuthenticated(true)
-    setUser({ name: "John Doe", email: "john@example.com", avatar: null })
+    window.location.href = `${baseUrl}/auth/google`
   }
 
   const handleSignOut = () => {
-    // Mock sign out - replace with your actual auth logic
     setIsAuthenticated(false)
-    setUser(null)
   }
 
   const filteredNavItems = navItems.filter(item => 
@@ -159,7 +154,7 @@ export function Navbar() {
                     )}
                   </div>
                   <span className="hidden sm:inline text-sm font-medium">
-                    {user?.name || "User"}
+                    {user?.username || "User"}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
