@@ -17,11 +17,6 @@ async function bootstrap() {
     transform: true,
   }));
 
-  app.enableCors({
-    origin: configService.get('FRONTEND_URL') || 'http://localhost:3000',
-    credentials: true,
-  });
-
   const prisma = new PrismaClient();
 
   app.use(
@@ -46,6 +41,12 @@ async function bootstrap() {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  app.enableCors({
+    origin: configService.get('FRONTEND_URL') || 'http://localhost:3000',
+    credentials: true,
+  });
+
   await app.listen(configService.get('PORT') || 8000);
+  console.log(`Application is running on: http://localhost:${configService.get('PORT') || 8000}`);
 }
 bootstrap();
