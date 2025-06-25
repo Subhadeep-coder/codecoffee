@@ -17,6 +17,7 @@ import { AuthGuard as CustomAuthGuard } from './guards/auth.guard';
 import { Request, Response } from 'express';
 import { LinkProviderDto, RegisterDto } from './dto';
 import { CurrentUser } from 'src/common';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -75,13 +76,17 @@ export class AuthController {
   }
 
   @Get('google')
-  @UseGuards(AuthGuard('google'))
-  async googleAuth() {
-    // Initiates Google OAuth flow
+  @UseGuards(GoogleAuthGuard)
+  async googleAuth(@Req() req: Request) {
+    console.log('=== GOOGLE AUTH CONTROLLER ===');
+    console.log('Request received for /auth/google');
+    console.log('Session ID:', req.sessionID);
+    console.log('Is Authenticated:', req.isAuthenticated());
+    console.log('==============================');
   }
 
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const user = await this.authService.findOrCreateGoogleUser(req.user);
 
