@@ -7,15 +7,7 @@ export class GoogleAuthGuard extends AuthGuard('google') {
         const result = (await super.canActivate(context)) as boolean;
         const request = context.switchToHttp().getRequest();
 
-        await new Promise<void>((resolve, reject) => {
-            request.session.save((err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        });
+        await super.logIn(request);
 
         return result;
     }

@@ -23,25 +23,25 @@ import {
   UpdateReviewDto,
   ProblemQueryDto,
 } from './dto/problem.dto';
-import { AuthGuard } from '../auth/guards/auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Language } from 'generated/prisma';
-import { CurrentUser } from 'src/common';
+import { GetUser } from 'src/common';
 
 @Controller('problems')
 export class ProblemsController {
   constructor(private readonly problemsService: ProblemsService) { }
 
   @Post()
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   async create(
     @Body() createProblemDto: CreateProblemDto,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.createProblem(createProblemDto, user.id);
   }
 
   @Get()
-  async findAll(@Query() query: ProblemQueryDto, @CurrentUser() user?: any) {
+  async findAll(@Query() query: ProblemQueryDto, @GetUser() user?: any) {
     return this.problemsService.findAllProblems(query, user?.id);
   }
 
@@ -56,76 +56,76 @@ export class ProblemsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @CurrentUser() user?: any) {
+  async findOne(@Param('id') id: string, @GetUser() user?: any) {
     return this.problemsService.findProblemById(id, user?.id);
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   async update(
     @Param('id') id: string,
     @Body() updateProblemDto: UpdateProblemDto,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.updateProblem(id, updateProblemDto, user.id);
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
+  async remove(@Param('id') id: string, @GetUser() user: any) {
     return this.problemsService.deleteProblem(id, user.id);
   }
 
   // Test Cases endpoints
   @Post(':id/test-cases')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   async addTestCase(
     @Param('id') problemId: string,
     @Body() createTestCaseDto: CreateTestCaseDto,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.addTestCase(problemId, createTestCaseDto, user.id);
   }
 
   @Patch('test-cases/:testCaseId')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateTestCase(
     @Param('testCaseId') testCaseId: string,
     @Body() updateTestCaseDto: UpdateTestCaseDto,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.updateTestCase(testCaseId, updateTestCaseDto, user.id);
   }
 
   @Delete('test-cases/:testCaseId')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteTestCase(
     @Param('testCaseId') testCaseId: string,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.deleteTestCase(testCaseId, user.id);
   }
 
   // Boilerplates endpoints
   @Post(':id/boilerplates')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   async addBoilerplate(
     @Param('id') problemId: string,
     @Body() createBoilerplateDto: CreateBoilerplateDto,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.addBoilerplate(problemId, createBoilerplateDto, user.id);
   }
 
   @Patch(':id/boilerplates/:language')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateBoilerplate(
     @Param('id') problemId: string,
     @Param('language') language: Language,
     @Body() updateBoilerplateDto: UpdateBoilerplateDto,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.updateBoilerplate(
       problemId,
@@ -136,23 +136,23 @@ export class ProblemsController {
   }
 
   @Delete(':id/boilerplates/:language')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBoilerplate(
     @Param('id') problemId: string,
     @Param('language') language: Language,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.deleteBoilerplate(problemId, language, user.id);
   }
 
   // Reviews endpoints
   @Post(':id/reviews')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   async createReview(
     @Param('id') problemId: string,
     @Body() createReviewDto: CreateReviewDto,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.createReview(problemId, createReviewDto, user.id);
   }
@@ -171,21 +171,21 @@ export class ProblemsController {
   }
 
   @Patch(':id/reviews')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateReview(
     @Param('id') problemId: string,
     @Body() updateReviewDto: UpdateReviewDto,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.updateReview(problemId, updateReviewDto, user.id);
   }
 
   @Delete(':id/reviews')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteReview(
     @Param('id') problemId: string,
-    @CurrentUser() user: any,
+    @GetUser() user: any,
   ) {
     return this.problemsService.deleteReview(problemId, user.id);
   }

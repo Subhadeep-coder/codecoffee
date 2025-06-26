@@ -2,137 +2,115 @@ import {
   Controller,
   Post,
   Body,
+  UseGuards,
+  Get,
   Req,
   Res,
-  Get,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
   Delete,
   Param,
+  Put,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthGuard as CustomAuthGuard } from './guards/auth.guard';
-import { Request, Response } from 'express';
-import { LinkProviderDto, RegisterDto } from './dto';
-import { CurrentUser } from 'src/common';
-import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { Response } from 'express';
+import { AuthService } from './auth.service';
+import {
+  RegisterDto,
+  LoginDto,
+  LinkAccountDto,
+  ChangePasswordDto,
+} from './dto';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GetUser } from 'src/common';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) { }
 
   @Post('register')
-  async register(@Body() registerDto: RegisterDto, @Req() req: Request) {
-    const user = await this.authService.register(registerDto);
-
-    // Log in the user after registration
-    return new Promise((resolve, reject) => {
-      req.logIn(user, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({
-            message: 'Registration successful',
-            user,
-          });
-        }
-      });
-    });
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
   }
 
   @Post('login')
-  @UseGuards(AuthGuard('local'))
-  @HttpCode(HttpStatus.OK)
-  async login(@CurrentUser() user: any) {
-    return {
-      message: 'Login successful',
-      user,
-    };
+  async login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
+  }
+
+  @Post('refresh')
+  @UseGuards(JwtRefreshGuard)
+  async refreshTokens(@Req() req, @Body('refreshToken') refreshToken: string) {
+    return this.authService.refreshTokens(req.user.userId, refreshToken);
   }
 
   @Post('logout')
-  @UseGuards(CustomAuthGuard)
-  @HttpCode(HttpStatus.OK)
-  async logout(@Req() req: Request, @Res() res: Response) {
-    return new Promise((resolve) => {
-      req.logout((err) => {
-        if (err) {
-          return res.status(500).json({ message: 'Logout failed' });
-        }
-
-        req.session.destroy((err) => {
-          if (err) {
-            return res.status(500).json({ message: 'Session destruction failed' });
-          }
-
-          res.clearCookie('connect.sid'); // Default session cookie name
-          res.json({ message: 'Logout successful' });
-          resolve(null);
-        });
-      });
-    });
+  @UseGuards(JwtAuthGuard)
+  async logout(@GetUser('id') userId: string) {
+    return this.authService.logout(userId);
   }
 
   @Get('google')
-  @UseGuards(GoogleAuthGuard)
-  async googleAuth(@Req() req: Request) {
-    console.log('=== GOOGLE AUTH CONTROLLER ===');
-    console.log('Request received for /auth/google');
-    console.log('Session ID:', req.sessionID);
-    console.log('Is Authenticated:', req.isAuthenticated());
-    console.log('==============================');
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Initiates Google OAuth flow
   }
 
   @Get('google/callback')
-  @UseGuards(GoogleAuthGuard)
-  async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    const user = await this.authService.findOrCreateGoogleUser(req.user);
+  @UseGuards(AuthGuard('google'))
+  async googleAuthCallback(@Req() req, @Res() res: Response) {
+    const result = await this.authService.googleLogin(req.user);
 
-    return new Promise((resolve) => {
-      req.logIn(user, (err) => {
-        if (err) {
-          return res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
-        }
+    // Redirect to frontend with tokens
+    const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?accessToken=${result.accessToken}&refreshToken=${result.refreshToken}`;
+    res.redirect(redirectUrl);
+  }
 
-        res.redirect(`${process.env.CLIENT_URL}/dashboard`);
-        resolve(null);
-      });
-    });
+  @Get('github')
+  @UseGuards(AuthGuard('github'))
+  async githubAuth() {
+    // Initiates GitHub OAuth flow
+  }
+
+  @Get('github/callback')
+  @UseGuards(AuthGuard('github'))
+  async githubAuthCallback(@Req() req, @Res() res: Response) {
+    const result = await this.authService.githubLogin(req.user);
+
+    // Redirect to frontend with tokens
+    const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?accessToken=${result.accessToken}&refreshToken=${result.refreshToken}`;
+    res.redirect(redirectUrl);
+  }
+
+  @Post('link-account')
+  @UseGuards(JwtAuthGuard)
+  async linkAccount(
+    @GetUser('id') userId: string,
+    @Body() linkAccountDto: LinkAccountDto,
+  ) {
+    return this.authService.linkAccount(userId, linkAccountDto);
+  }
+
+  @Delete('unlink-account/:provider')
+  @UseGuards(JwtAuthGuard)
+  async unlinkAccount(
+    @GetUser('id') userId: string,
+    @Param('provider') provider: string,
+  ) {
+    return this.authService.unlinkAccount(userId, provider);
+  }
+
+  @Put('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(
+    @GetUser('id') userId: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(userId, changePasswordDto);
   }
 
   @Get('me')
-  @UseGuards(CustomAuthGuard)
-  async getMe(@CurrentUser() user: any) {
-    return this.authService.getUserWithAccounts(user.id);
-  }
-
-  @Post('link-provider')
-  @UseGuards(CustomAuthGuard)
-  async linkProvider(
-    @CurrentUser() user: any,
-    @Body() linkProviderDto: LinkProviderDto,
-  ) {
-    await this.authService.linkProvider(user.id, linkProviderDto);
-    return { message: 'Provider linked successfully' };
-  }
-
-  @Delete('unlink-provider/:provider')
-  @UseGuards(CustomAuthGuard)
-  async unlinkProvider(
-    @CurrentUser() user: any,
-    @Param('provider') provider: string,
-  ) {
-    await this.authService.unlinkProvider(user.id, provider);
-    return { message: 'Provider unlinked successfully' };
-  }
-
-  @Get('status')
-  async getAuthStatus(@Req() req: Request) {
-    return {
-      isAuthenticated: req.isAuthenticated(),
-      user: req.user || null,
-    };
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Req() req) {
+    return req.user;
   }
 }
