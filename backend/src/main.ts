@@ -1,52 +1,102 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
-import * as session from 'express-session';
-import * as passport from 'passport';
-import { PrismaClient } from 'generated/prisma';
-import { PrismaSessionStore } from '@quixo3/prisma-session-store';
+import { ConfigService } from '@nestjs/config';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from './app.module';
+import * as cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
+  app.use(helmet({
+    crossOriginEmbedderPolicy: false,
   }));
 
-  const prisma = new PrismaClient();
+  app.use(cookieParser());
 
-  app.use(
-    session({
-      store: new PrismaSessionStore(prisma, {
-        checkPeriod: 2 * 60 * 1000,
-        dbRecordIdIsSessionId: true,
-        dbRecordIdFunction: undefined,
-      }),
-      secret: process.env.SESSION_SECRET || 'your-session-secret',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+  app.enableCors({
+    origin: [
+      configService.get<string>('FRONTEND_URL', 'http://localhost:3001'),
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'x-access-token',
+    ],
+  });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
       },
     }),
   );
 
-  app.use(passport.initialize());
-  app.use(passport.session());
+  app.setGlobalPrefix('api/v1');
 
-  app.enableCors({
-    origin: configService.get('FRONTEND_URL') || 'http://localhost:3000',
-    credentials: true,
+  // Swagger/OpenAPI documentation
+  if (configService.get<string>('NODE_ENV') !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Authentication API')
+      .setDescription('JWT-based authentication system with OAuth integration')
+      .setVersion('1.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'JWT',
+          description: 'Enter JWT token',
+          in: 'header',
+        },
+        'JWT-auth', // This name here is important for matching up with @ApiBearerAuth() in your controllers
+      )
+      .addTag('Authentication', 'Authentication endpoints')
+      .addTag('Users', 'User management endpoints')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true, // Keep authorization after page refresh
+      },
+    });
+
+    console.log('📚 Swagger documentation available at: http://localhost:3000/api/docs');
+  }
+
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    app.close();
   });
 
-  await app.listen(configService.get('PORT') || 8000);
-  console.log(`Application is running on: http://localhost:${configService.get('PORT') || 8000}`);
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    app.close();
+  });
+
+  const port = configService.get<number>('PORT', 5000);
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`🚀 Application is running on: http://localhost:${port}`);
+  console.log(`🔐 Auth endpoints available at: http://localhost:${port}/api/v1/auth`);
+  console.log(`📱 Environment: ${configService.get<string>('NODE_ENV', 'development')}`);
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+  console.error('❌ Error starting application:', error);
+  process.exit(1);
+});

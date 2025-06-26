@@ -1,21 +1,9 @@
-import { IsEnum, IsOptional, IsString } from "class-validator";
-import { AuthProvider } from "generated/prisma";
+import { IsString } from "class-validator";
 
-export class LinkProviderDto {
-    @IsEnum(AuthProvider)
-    provider: AuthProvider;
+export class LinkAccountDto {
+    @IsString()
+    provider: string;
 
     @IsString()
-    providerAccountId: string;
-
-    @IsOptional()
-    @IsString()
-    accessToken?: string;
-
-    @IsOptional()
-    @IsString()
-    refreshToken?: string;
-
-    @IsOptional()
-    expiresAt?: number;
+    providerId: string;
 }
