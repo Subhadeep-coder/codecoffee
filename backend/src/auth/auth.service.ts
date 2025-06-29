@@ -8,7 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import * as argon2 from 'argon2';
-import { AuthProvider, User } from 'generated/prisma';
+import { AuthProvider, User } from '@prisma/client';
 import {
     RegisterDto,
     LoginDto,
@@ -82,27 +82,28 @@ export class AuthService {
         };
     }
 
-    async refreshTokens(userId: string, refreshToken: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId },
-        });
+    async refreshTokens(userId: string) {
+        // const user = await this.prisma.user.findUnique({
+        //     where: { id: userId },
+        // });
 
-        if (!user) {
-            throw new UnauthorizedException('Access denied');
-        }
+        // if (!user) {
+        //     throw new UnauthorizedException('Access denied');
+        // }
 
-        // In production, you should store refresh tokens in database and validate them
-        // For now, we'll just verify the token signature
-        try {
-            await this.jwtService.verifyAsync(refreshToken, {
-                secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-            });
-        } catch {
-            throw new UnauthorizedException('Invalid refresh token');
-        }
+        // // In production, you should store refresh tokens in database and validate them
+        // // For now, we'll just verify the token signature
+        // try {
+        //     await this.jwtService.verifyAsync(refreshToken, {
+        //         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        //     });
+        // } catch {
+        //     throw new UnauthorizedException('Invalid refresh token');
+        // }
 
-        const tokens = await this.generateTokens(user.id);
-        return tokens;
+        // const tokens = await this.generateTokens(user.id);
+        // return tokens;
+        return this.generateTokens(userId);
     }
 
     async googleLogin(googleUser: any) {
@@ -342,7 +343,7 @@ export class AuthService {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
                 secret: this.configService.get<string>('JWT_SECRET'),
-                expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m'),
+                expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '1m'),
             }),
             this.jwtService.signAsync(payload, {
                 secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
@@ -362,7 +363,7 @@ export class AuthService {
     }
 
     private async generateUniqueUsername(firstName: string, lastName: string, fallback?: string): Promise<string> {
-        const baseUsername = fallback || `${firstName.toLowerCase()}${lastName.toLowerCase()}`.replace(/[^a-z0-9]/g, '');
+        const baseUsername = fallback || `${firstName?.toLowerCase()}${lastName?.toLowerCase()}`.replace(/[^a-z0-9]/g, '');
         let username = baseUsername;
         let counter = 1;
 

@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -14,38 +13,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User Management
 model User {
-  id         String    @id @default(cuid())
-  email      String    @unique
-  username   String    @unique
+  id         String       @id @default(cuid())
+  email      String       @unique
+  username   String       @unique
   password   String?
   firstName  String
-  lastName   String
+  lastName   String?
   avatar     String?
   bio        String?
-  rating     Int       @default(0)
-  points     Int       @default(0)
-  streak     Int       @default(0)
+  rating     Int          @default(0)
+  points     Int          @default(0)
+  streak     Int          @default(0)
   lastSolved DateTime?
-  isVerified Boolean   @default(false)
-
+  isVerified Boolean      @default(false)
   provider   AuthProvider @default(LOCAL)
   providerId String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
   accounts              Account[]
   problems              Problem[]
   submissions           Submission[]
   contests              Contest[]
   contestParticipations ContestParticipation[]
-  problemReviews        ProblemReview[]
-  followers             Follow[]               @relation("UserFollowers")
-  following             Follow[]               @relation("UserFollowing")
-  leaderboardEntry      LeaderboardEntry[]
+  discussions           Discussion[]
+  comments              Comment[]
+  votes                 Vote[]
+  solutions             Solution[]
+  bookmarks             Bookmark[]
+  followedBy            Follow[]               @relation("Following")
+  following             Follow[]               @relation("Follower")
 
   @@index([rating])
   @@index([points])
@@ -53,7 +51,6 @@ model User {
   @@map("users")
 }
 
-// OAuth accounts table
 model Account {
   id                String   @id @default(cuid())
   userId            String
@@ -77,62 +74,52 @@ model Account {
   @@map("accounts")
 }
 
-enum AuthProvider {
-  LOCAL
-  GOOGLE
-  GITHUB
-  DISCORD
-}
-
-model Session {
-  id        String   @id @default(cuid())
-  sid       String   @unique
-  data      String   @db.Text
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([sid])
-  @@index([expiresAt])
-  @@map("sessions")
-}
-
-// Problem Management
 model Problem {
   id          String     @id @default(cuid())
   title       String
+  slug        String     @unique
   description String     @db.Text
   difficulty  Difficulty
-  tags        String[]
-  timeLimit   Int        @default(2000)
-  memoryLimit Int        @default(256)
-  isPublic    Boolean    @default(false)
-  isApproved  Boolean    @default(false)
-  createdById String
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  tags        String[]   @default([])
+  constraints String?    @db.Text
+  hints       String[]   @default([])
 
-  // Relations
-  createdBy       User             @relation(fields: [createdById], references: [id])
+  totalSubmissions    Int   @default(0)
+  acceptedSubmissions Int   @default(0)
+  acceptanceRate      Float @default(0)
+
+  createdBy   String
+  isPublished Boolean @default(false)
+  isPremium   Boolean @default(false)
+
+  companies String[] @default([])
+  frequency Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator         User             @relation(fields: [createdBy], references: [id])
   testCases       TestCase[]
-  boilerplates    Boilerplate[]
   submissions     Submission[]
-  reviews         ProblemReview[]
+  solutions       Solution[]
+  discussions     Discussion[]
+  bookmarks       Bookmark[]
   contestProblems ContestProblem[]
 
   @@index([difficulty])
-  @@index([isPublic, isApproved])
-  @@index([createdById])
+  @@index([createdBy])
+  @@index([isPremium])
+  @@index([acceptanceRate])
   @@map("problems")
 }
 
 model TestCase {
-  id        String  @id @default(cuid())
-  problemId String
-  input     String  @db.Text
-  output    String  @db.Text
-  isHidden  Boolean @default(false)
-  points    Int     @default(10)
+  id             String  @id @default(cuid())
+  problemId      String
+  input          String  @db.Text
+  expectedOutput String  @db.Text
+  isHidden       Boolean @default(false)
+  explanation    String?
 
   problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
@@ -140,38 +127,57 @@ model TestCase {
   @@map("test_cases")
 }
 
-model Boilerplate {
-  id        String   @id @default(cuid())
-  problemId String
-  language  Language
-  code      String   @db.Text
+model Submission {
+  id              String           @id @default(cuid())
+  userId          String
+  problemId       String
+  code            String           @db.Text
+  language        String
+  status          SubmissionStatus
+  runtime         Int?
+  memory          Int?
+  testCasesPassed Int              @default(0)
+  totalTestCases  Int              @default(0)
+  errorMessage    String?          @db.Text
+  judge0Token     String?
 
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  submittedAt DateTime @default(now())
 
-  @@unique([problemId, language])
-  @@map("boilerplates")
+  user    User    @relation(fields: [userId], references: [id])
+  problem Problem @relation(fields: [problemId], references: [id])
+
+  @@index([userId])
+  @@index([problemId])
+  @@index([status])
+  @@index([submittedAt])
+  @@map("submissions")
 }
 
-// Contest Management
 model Contest {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
-  description String   @db.Text
-  startTime   DateTime
-  endTime     DateTime
-  maxDuration Int?
-  isPublic    Boolean  @default(true)
-  createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  description String?     @db.Text
+  createdBy   String
+  type        ContestType @default(PUBLIC)
 
-  // Relations
-  createdBy      User                   @relation(fields: [createdById], references: [id])
+  startTime DateTime
+  endTime   DateTime
+  duration  Int
+
+  maxParticipants Int?
+  isRated         Boolean @default(true)
+  penalty         Int     @default(5) // penalty minutes for wrong submission
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator        User                   @relation(fields: [createdBy], references: [id])
   problems       ContestProblem[]
   participations ContestParticipation[]
 
-  @@index([startTime, endTime])
-  @@index([isPublic])
+  @@index([createdBy])
+  @@index([startTime])
+  @@index([type])
   @@map("contests")
 }
 
@@ -183,120 +189,192 @@ model ContestProblem {
   order     Int
 
   contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id])
 
   @@unique([contestId, problemId])
   @@unique([contestId, order])
+  @@index([contestId])
   @@map("contest_problems")
 }
 
 model ContestParticipation {
-  id         String    @id @default(cuid())
-  contestId  String
-  userId     String
-  score      Int       @default(0)
-  rank       Int?
-  startTime  DateTime  @default(now())
-  endTime    DateTime?
-  isFinished Boolean   @default(false)
+  id           String @id @default(cuid())
+  userId       String
+  contestId    String
+  score        Int    @default(0)
+  penalty      Int    @default(0)
+  rank         Int?
+  ratingChange Int    @default(0)
 
-  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt   DateTime  @default(now())
+  finishedAt DateTime?
 
-  @@unique([contestId, userId])
-  @@index([contestId, score])
+  user        User                @relation(fields: [userId], references: [id])
+  contest     Contest             @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  submissions ContestSubmission[]
+
+  @@unique([userId, contestId])
+  @@index([contestId])
+  @@index([score])
   @@map("contest_participations")
 }
 
-// Submission Management
-model Submission {
-  id            String           @id @default(cuid())
-  problemId     String
-  userId        String
-  contestId     String?
-  language      Language
-  code          String           @db.Text
-  status        SubmissionStatus
-  score         Int              @default(0)
-  executionTime Float?
-  memoryUsed    Int?
-  judge0Token   String?
-  createdAt     DateTime         @default(now())
+model ContestSubmission {
+  id              String           @id @default(cuid())
+  participationId String
+  problemId       String
+  code            String           @db.Text
+  language        String
+  status          SubmissionStatus
+  runtime         Int?
+  memory          Int?
+  points          Int              @default(0)
+  penalty         Int              @default(0)
 
-  // Relations
-  problem Problem            @relation(fields: [problemId], references: [id])
-  user    User               @relation(fields: [userId], references: [id])
-  results SubmissionResult[]
+  submittedAt DateTime @default(now())
 
-  @@index([userId, problemId])
-  @@index([contestId])
-  @@index([status])
+  participation ContestParticipation @relation(fields: [participationId], references: [id], onDelete: Cascade)
+
+  @@index([participationId])
+  @@index([submittedAt])
+  @@map("contest_submissions")
+}
+
+model Discussion {
+  id        String         @id @default(cuid())
+  title     String
+  content   String         @db.Text
+  authorId  String
+  problemId String?
+  type      DiscussionType @default(GENERAL)
+
+  upvotes   Int     @default(0)
+  downvotes Int     @default(0)
+  isPinned  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User      @relation(fields: [authorId], references: [id])
+  problem  Problem?  @relation(fields: [problemId], references: [id])
+  comments Comment[]
+  votes    Vote[]
+
+  @@index([authorId])
+  @@index([problemId])
+  @@index([type])
   @@index([createdAt])
-  @@map("submissions")
+  @@map("discussions")
 }
 
-model SubmissionResult {
-  id            String  @id @default(cuid())
-  submissionId  String
-  testCaseId    String
-  status        String
-  executionTime Float?
-  memoryUsed    Int?
-  output        String? @db.Text
-  errorOutput   String? @db.Text
+model Comment {
+  id           String  @id @default(cuid())
+  content      String  @db.Text
+  authorId     String
+  discussionId String
+  parentId     String?
 
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  upvotes   Int @default(0)
+  downvotes Int @default(0)
 
-  @@index([submissionId])
-  @@map("submission_results")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author     User       @relation(fields: [authorId], references: [id])
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  parent     Comment?   @relation("CommentReplies", fields: [parentId], references: [id])
+  replies    Comment[]  @relation("CommentReplies")
+  votes      Vote[]
+
+  @@index([authorId])
+  @@index([discussionId])
+  @@index([parentId])
+  @@map("comments")
 }
 
-// Review System
-model ProblemReview {
-  id        String   @id @default(cuid())
-  problemId String
-  userId    String
-  rating    Int
-  comment   String   @db.Text
+model Vote {
+  id           String   @id @default(cuid())
+  userId       String
+  type         VoteType
+  discussionId String?
+  commentId    String?
+
   createdAt DateTime @default(now())
 
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id])
+  discussion Discussion? @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  comment    Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
-  @@unique([problemId, userId])
-  @@index([problemId])
-  @@map("problem_reviews")
+  @@unique([userId, discussionId])
+  @@unique([userId, commentId])
+  @@index([userId])
+  @@map("votes")
 }
 
-// Social Features
+model Solution {
+  id         String  @id @default(cuid())
+  title      String
+  content    String  @db.Text
+  code       String  @db.Text
+  language   String
+  complexity String?
+  approach   String?
+
+  authorId   String
+  problemId  String
+  isOfficial Boolean @default(false)
+
+  upvotes   Int @default(0)
+  downvotes Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author  User    @relation(fields: [authorId], references: [id])
+  problem Problem @relation(fields: [problemId], references: [id])
+
+  @@index([authorId])
+  @@index([problemId])
+  @@index([isOfficial])
+  @@map("solutions")
+}
+
+model Bookmark {
+  id        String @id @default(cuid())
+  userId    String
+  problemId String
+
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  problem Problem @relation(fields: [problemId], references: [id])
+
+  @@unique([userId, problemId])
+  @@index([userId])
+  @@map("bookmarks")
+}
+
 model Follow {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
   followerId  String
   followingId String
-  createdAt   DateTime @default(now())
 
-  follower  User @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
-  following User @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id])
+  following User @relation("Following", fields: [followingId], references: [id])
 
   @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
   @@map("follows")
 }
 
-// Leaderboard Cache
-model LeaderboardEntry {
-  id        String          @id @default(cuid())
-  userId    String
-  type      LeaderboardType
-  period    String
-  score     Int
-  rank      Int
-  updatedAt DateTime        @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, type, period])
-  @@index([type, period, rank])
-  @@map("leaderboard_entries")
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+  DISCORD
 }
 
 enum Difficulty {
@@ -305,33 +383,31 @@ enum Difficulty {
   HARD
 }
 
-enum Language {
-  JAVASCRIPT
-  PYTHON
-  JAVA
-  CPP
-  C
-  CSHARP
-  GOLANG
-  RUST
-  KOTLIN
-  SWIFT
-}
-
 enum SubmissionStatus {
   PENDING
-  PROCESSING
   ACCEPTED
   WRONG_ANSWER
   TIME_LIMIT_EXCEEDED
   MEMORY_LIMIT_EXCEEDED
   RUNTIME_ERROR
   COMPILATION_ERROR
-  SYSTEM_ERROR
+  INTERNAL_ERROR
 }
 
-enum LeaderboardType {
-  POINTS
-  RATING
-  PROBLEMS_SOLVED
+enum ContestType {
+  PUBLIC
+  PRIVATE
+  COMPANY
+}
+
+enum DiscussionType {
+  GENERAL
+  SOLUTION
+  HINT
+  BUG_REPORT
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
 }

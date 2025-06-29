@@ -1,13 +1,17 @@
-import { CTASection } from "@/components/Landing/CTASection";
-import { FeaturesSection } from "@/components/Landing/Feature/FeatureSection";
-import { HeroSection } from "@/components/Landing/HeroSection";
+import { Hero } from "@/components/landing/hero"
+import { Features } from "@/components/landing/features"
+import { Stats } from "@/components/landing/stats"
+import { CTA } from "@/components/landing/cta"
+import { Navbar } from "@/components/layout/navbar"
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col">
-      <HeroSection />
-      <FeaturesSection />
-      <CTASection />
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <Hero />
+      <Stats />
+      <Features />
+      <CTA />
     </div>
   )
 }
