@@ -89,7 +89,7 @@ model Problem {
   acceptanceRate      Float @default(0)
 
   createdBy   String
-  isPublished Boolean @default(false)
+  isPublished Boolean @default(true)
   isPremium   Boolean @default(false)
 
   companies String[] @default([])

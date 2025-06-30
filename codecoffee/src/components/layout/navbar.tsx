@@ -83,6 +83,9 @@ export function Navbar() {
                                         <Link href="/profile">Profile</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
+                                        <Link href="/dashboard/problems">My Problems</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
                                         <Link href="/submissions">My Submissions</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />

@@ -1,17 +1,15 @@
-import { Hero } from "@/components/landing/hero"
-import { Features } from "@/components/landing/features"
-import { Stats } from "@/components/landing/stats"
-import { CTA } from "@/components/landing/cta"
+import React from "react"
 import { Navbar } from "@/components/layout/navbar"
 
-export default function HomePage() {
+interface Props {
+  children: React.ReactNode;
+}
+
+export default function HomePage({ children }: Props) {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <Hero />
-      <Stats />
-      <Features />
-      <CTA />
+      {children}
     </div>
   )
 }

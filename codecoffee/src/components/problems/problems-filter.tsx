@@ -2,23 +2,17 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { FilterTypes } from "@/app/problems/page"
 
 interface ProblemsFilterProps {
-    onFilter: (filters: {
-        difficulty: string[]
-        category: string[]
-        status: string
-        search: string
-    }) => void
+    onFilter: (filters: FilterTypes) => void
 }
 
 export function ProblemsFilter({ onFilter }: ProblemsFilterProps) {
-    const [search, setSearch] = useState("")
     const [difficulty, setDifficulty] = useState<string[]>([])
     const [category, setCategory] = useState<string[]>([])
     const [status, setStatus] = useState("all")
@@ -29,31 +23,25 @@ export function ProblemsFilter({ onFilter }: ProblemsFilterProps) {
     const handleDifficultyChange = (diff: string, checked: boolean) => {
         const newDifficulty = checked ? [...difficulty, diff] : difficulty.filter((d) => d !== diff)
         setDifficulty(newDifficulty)
-        onFilter({ difficulty: newDifficulty, category, status, search })
+        onFilter({ difficulty: newDifficulty, category, status })
     }
 
     const handleCategoryChange = (cat: string, checked: boolean) => {
         const newCategory = checked ? [...category, cat] : category.filter((c) => c !== cat)
         setCategory(newCategory)
-        onFilter({ difficulty, category: newCategory, status, search })
-    }
-
-    const handleSearchChange = (value: string) => {
-        setSearch(value)
-        onFilter({ difficulty, category, status, search: value })
+        onFilter({ difficulty, category: newCategory, status })
     }
 
     const handleStatusChange = (value: string) => {
         setStatus(value)
-        onFilter({ difficulty, category, status: value, search })
+        onFilter({ difficulty, category, status: value })
     }
 
     const clearFilters = () => {
-        setSearch("")
         setDifficulty([])
         setCategory([])
         setStatus("all")
-        onFilter({ difficulty: [], category: [], status: "all", search: "" })
+        onFilter({ difficulty: [], category: [], status: "all" })
     }
 
     return (
@@ -62,19 +50,6 @@ export function ProblemsFilter({ onFilter }: ProblemsFilterProps) {
                 <CardTitle className="text-lg">Filters</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div>
-                    <Label htmlFor="search" className="text-sm font-medium">
-                        Search
-                    </Label>
-                    <Input
-                        id="search"
-                        placeholder="Search problems..."
-                        value={search}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="mt-1"
-                    />
-                </div>
-
                 <div>
                     <Label className="text-sm font-medium">Status</Label>
                     <Select value={status} onValueChange={handleStatusChange}>

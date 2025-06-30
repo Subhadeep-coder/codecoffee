@@ -3,82 +3,114 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateProblemsDto, GetProblemsDto } from './dto';
+import { Difficulty, Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProblemsService {
     constructor(private prisma: PrismaService) { }
 
-    async getProblems(getProblemsDto: any) {
+    async getProblems(getProblemsDto: GetProblemsDto) {
         const {
-            page = 1,
-            limit = 20,
+            page = '1',
+            limit = '20',
             difficulty,
             tags,
             search,
             company,
             sortBy = 'createdAt',
             sortOrder = 'desc',
-            showPremium = true
+            showPremium = 'true'
         } = getProblemsDto;
 
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
-        const where = {
+        const whereInput = Prisma.validator<Prisma.ProblemWhereInput>()({
             isPublished: true,
             ...(showPremium === 'false' && { isPremium: false }),
-            ...(difficulty && { difficulty: difficulty.toUpperCase() }),
+            ...(difficulty && { difficulty: difficulty.toUpperCase() as any }),
             ...(search && {
                 OR: [
-                    { title: { contains: search, mode: 'insensitive' } },
-                    { description: { contains: search, mode: 'insensitive' } }
-                ]
-            })
-        };
-
-        if (tags) {
-            const tagArray = tags.split(',');
-            where.tags = {
-                hasSome: tagArray
-            };
-        }
-
-        if (company) {
-            where.companies = {
-                has: company
-            };
-        }
-
-        const problems = await this.prisma.problem.findMany({
-            where,
-            include: {
-                creator: {
-                    select: { id: true, username: true, firstName: true, lastName: true }
-                },
-                _count: {
-                    select: {
-                        submissions: true,
-                        discussions: true,
-                        bookmarks: true
+                    {
+                        title: {
+                            contains: search,
+                            mode: Prisma.QueryMode.insensitive
+                        }
+                    },
+                    {
+                        description: {
+                            contains: search,
+                            mode: Prisma.QueryMode.insensitive
+                        }
                     }
+                ]
+            }),
+            ...(tags && {
+                tags: {
+                    hasSome: tags.split(',').map(tag => tag.trim())
                 }
-            },
-            orderBy: { [sortBy]: sortOrder },
-            skip,
-            take: parseInt(limit)
+            }),
+            ...(company && {
+                companies: {
+                    has: company
+                }
+            })
         });
 
-        const total = await this.prisma.problem.count({ where });
+        const orderByInput = Prisma.validator<Prisma.ProblemOrderByWithRelationInput>()({
+            [sortBy]: sortOrder as Prisma.SortOrder
+        });
 
-        return {
-            problems,
-            total,
-            page: parseInt(page),
-            limit: parseInt(limit),
+        try {
+            const [problems, total] = await Promise.all([
+                this.prisma.problem.findMany({
+                    where: whereInput,
+                    include: {
+                        creator: {
+                            select: {
+                                id: true,
+                                username: true,
+                                firstName: true,
+                                lastName: true
+                            }
+                        },
+                        _count: {
+                            select: {
+                                submissions: true,
+                                discussions: true,
+                                bookmarks: true
+                            }
+                        }
+                    },
+                    orderBy: orderByInput,
+                    skip,
+                    take: parseInt(limit)
+                }),
+                this.prisma.problem.count({ where: whereInput })
+            ]);
+
+            console.log('Where clause: ', whereInput);
+
+            const problems1 = await this.prisma.problem.findMany({});
+            console.log('Problems: ', problems1);
+
+            return {
+                problems,
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit)),
+                hasNextPage: skip + parseInt(limit) < total,
+                hasPreviousPage: parseInt(page) > 1
+            };
+        } catch (error) {
+            console.error('Error fetching problems:', error);
+            throw new Error('Failed to fetch problems');
         }
     }
 
     async getProblemById(slug: string) {
-
+        console.log("Slug: ", slug);
         const problem = await this.prisma.problem.findUnique({
             where: { slug: slug },
             include: {
@@ -111,7 +143,7 @@ export class ProblemsService {
     }
 
 
-    async createProblem(userId: string, createProblemDto: any) {
+    async createProblem(userId: string, createProblemDto: CreateProblemsDto) {
         const {
             title,
             description,
@@ -124,15 +156,12 @@ export class ProblemsService {
             isPremium = false
         } = createProblemDto;
 
-        // Validate required fields
         if (!title || !description || !difficulty) {
             throw new NotFoundException('Title, description, and difficulty are required');
         }
 
-        // Generate slug from title
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 
-        // Check if slug already exists
         const existingProblem = await this.prisma.problem.findUnique({ where: { slug } });
         if (existingProblem) {
             throw new NotFoundException('Problem with this title already exists');
@@ -143,7 +172,7 @@ export class ProblemsService {
                 title,
                 slug,
                 description,
-                difficulty: difficulty.toUpperCase(),
+                difficulty: difficulty.toUpperCase() as Difficulty,
                 tags,
                 constraints,
                 hints,
