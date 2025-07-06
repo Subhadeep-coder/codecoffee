@@ -1,0 +1,24 @@
+FROM python:3.9-alpine
+
+# Install security updates
+RUN apk update && apk upgrade
+
+# Create non-root user
+RUN adduser -D -s /bin/sh judgeuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements if any
+# COPY requirements.txt .
+# RUN pip install -r requirements.txt
+
+# Switch to non-root user
+USER judgeuser
+
+# Set resource limits
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Default command
+CMD ["python3"]

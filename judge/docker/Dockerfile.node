@@ -1,0 +1,19 @@
+FROM node:16-alpine
+
+# Security updates
+RUN apk update && apk upgrade
+
+# Create non-root user
+RUN adduser -D -s /bin/sh judgeuser
+
+# Set working directory
+WORKDIR /app
+
+# Install global packages if needed
+# RUN npm install -g some-package
+
+# Switch to non-root user
+USER judgeuser
+
+# Default command
+CMD ["node"]
