@@ -7,9 +7,10 @@ class JavaExecutor extends BaseExecutor_1.BaseExecutor {
         super(...arguments);
         this.fileExtension = "java";
         this.compileCommand = "javac *.java";
-        this.runCommand = "java Main";
+        this.runCommand = "cd /tmp && javac ${fileName} && java Main";
         this.dockerImage = "openjdk:17-alpine";
         this.mainFileName = "Main.java";
+        this.shell = "sh";
     }
 }
 exports.JavaExecutor = JavaExecutor;

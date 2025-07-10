@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateSubmissionDto } from './dto/create-submission.dto';
 
 @Injectable()
 export class SubmissionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createSubmission(userId: string, createSubmissionDto: any) {
+  async createSubmission(
+    userId: string,
+    createSubmissionDto: CreateSubmissionDto,
+  ) {
     // Build the body dynamically from the DTO
     const { problemId, code, language } = createSubmissionDto;
     const soucreCode = Buffer.from(code, 'base64').toString('utf-8');
@@ -42,5 +46,21 @@ export class SubmissionsService {
     const result = await response.json();
     console.log('After getting submission status: ', result);
     return result;
+  }
+
+  async getSubmissions(userId: string, problemId: string) {
+    const submissions = await this.prisma.submission.findMany({
+      where: {
+        AND: [{ userId: userId }, { problemId: problemId }],
+      },
+      omit: {
+        code: true,
+      },
+      orderBy: {
+        submittedAt: 'desc',
+      },
+    });
+
+    return submissions;
   }
 }

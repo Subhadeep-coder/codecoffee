@@ -87,8 +87,6 @@ export class ProblemsService {
         this.prisma.problem.count({ where: whereInput }),
       ]);
 
-      console.log('Where clause: ', whereInput);
-
       return {
         problems,
         total,
@@ -105,7 +103,6 @@ export class ProblemsService {
   }
 
   async getProblemById(slug: string) {
-    console.log('Slug: ', slug);
     const problem = await this.prisma.problem.findUnique({
       where: { slug: slug },
       include: {
@@ -117,7 +114,6 @@ export class ProblemsService {
           select: { input: true, expectedOutput: true, explanation: true },
         },
         problemTemplate: true,
-        inputFormat: true,
         _count: {
           select: {
             submissions: true,
@@ -148,6 +144,16 @@ export class ProblemsService {
     return problem;
   }
 
+  async getMyProblems(userId: string) {
+    const problems = await this.prisma.problem.findMany({
+      where: {
+        createdBy: userId,
+      },
+    });
+
+    return problems;
+  }
+
   async createProblem(userId: string, createProblemDto: CreateProblemsDto) {
     const {
       title,
@@ -160,8 +166,6 @@ export class ProblemsService {
       testCases = [],
       isPremium = false,
       problemTemplates = [],
-      inputFormats = [],
-      outputFormats = [],
     } = createProblemDto;
 
     if (!title || !description || !difficulty) {
@@ -214,25 +218,6 @@ export class ProblemsService {
       },
     };
 
-    console.log('Input Format: ', inputFormats);
-    console.log('Output Format: ', outputFormats);
-
-    // Fix: Check if arrays have actual valid objects, not just length
-    if (
-      inputFormats &&
-      inputFormats.length > 0 &&
-      inputFormats.every((format) => format.formatType && format.parseMethod)
-    ) {
-      data.inputFormat = { create: inputFormats };
-    }
-    if (
-      outputFormats &&
-      outputFormats.length > 0 &&
-      outputFormats.every((format) => format.formatType && format.parseMethod)
-    ) {
-      data.outputFormat = { create: outputFormats };
-    }
-
     const problem = await this.prisma.problem.create({
       data,
       include: {
@@ -241,8 +226,6 @@ export class ProblemsService {
         },
         testCases: true,
         problemTemplate: true,
-        inputFormat: true,
-        outputFormat: true,
       },
     });
 
@@ -275,7 +258,6 @@ export class ProblemsService {
       isPublished,
       testCases,
       problemTemplates,
-      inputFormats,
     } = updatedProblemDto;
 
     // Check if problem exists and user owns it
@@ -284,7 +266,6 @@ export class ProblemsService {
       include: {
         testCases: true,
         problemTemplate: true,
-        inputFormat: true,
       },
     });
 
@@ -343,12 +324,6 @@ export class ProblemsService {
             create: encodedTemplates,
           },
         }),
-        ...(inputFormats && {
-          inputFormat: {
-            deleteMany: {},
-            create: inputFormats,
-          },
-        }),
       },
       include: {
         creator: {
@@ -356,7 +331,6 @@ export class ProblemsService {
         },
         testCases: true,
         problemTemplate: true,
-        inputFormat: true,
       },
     });
 

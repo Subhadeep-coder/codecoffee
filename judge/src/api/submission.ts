@@ -107,7 +107,6 @@ app.get(
   "/submission/:id",
   async (req: Request, res: Response): Promise<any> => {
     try {
-      console.log("Here in the get submission request");
       const { id: submissionId } = req.params;
 
       if (!submissionId) {

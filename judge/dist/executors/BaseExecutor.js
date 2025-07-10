@@ -19,6 +19,7 @@ const process_1 = require("process");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 class BaseExecutor {
     constructor() {
+        this.shell = "bash";
         this.tempExecutionDir = "/";
     }
     checkDockerAvailability() {
@@ -54,14 +55,12 @@ class BaseExecutor {
     }
     executeCode(code, testCase) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Check Docker availability first
             if (!(yield this.checkDockerAvailability())) {
                 return {
                     status: "INTERNAL_ERROR",
                     errorMessage: "Docker is not available. Please ensure Docker is installed and running.",
                 };
             }
-            // Ensure Docker image is available
             if (!(yield this.ensureDockerImage())) {
                 return {
                     status: "INTERNAL_ERROR",
@@ -87,8 +86,6 @@ class BaseExecutor {
             try {
                 yield (0, promises_1.mkdir)(tempDir, { recursive: true });
                 yield (0, promises_1.writeFile)(filePath, code);
-                console.log("Before compilation");
-                // Compile if needed
                 if (this.compileCommand) {
                     const compileResult = yield this.compile(tempDir, fileName);
                     if (!compileResult.success) {
@@ -99,8 +96,7 @@ class BaseExecutor {
                         };
                     }
                 }
-                console.log("After compilation");
-                // Execute with proper resource monitoring
+                // console.log("After compilation");
                 return yield this.execute(tempDir, fileName, testCase);
             }
             catch (error) {
@@ -156,7 +152,7 @@ class BaseExecutor {
                 // );
                 const dockerCommand = this.buildDockerCommand(fileName, testCase);
                 const startTime = Date.now();
-                console.log("Before Execution of Docker command: \n", dockerCommand);
+                // console.log("Before Execution of Docker command: \n", dockerCommand);
                 const { stdout, stderr } = yield execAsync(dockerCommand, {
                     timeout: testCase.timeLimit + 100000, // Add 5s buffer for Docker overhead
                     maxBuffer: 10 * 1024 * 1024, // 10MB output limit
@@ -188,6 +184,8 @@ class BaseExecutor {
                 };
             }
             catch (error) {
+                console.log("Error in execute function: ");
+                console.log(error);
                 const runtime = Date.now() - Date.now();
                 if (error.code === "TIMEOUT" || error.killed) {
                     return {
@@ -212,8 +210,6 @@ class BaseExecutor {
         // .replace(/"/g, '\\"')
         // .replace(/\$/g, "\\$")
         // .replace(/`/g, "\\`");
-        console.log("Input:\n");
-        console.table(input);
         const runCmd = this.runCommand.replace(/\$\{fileName\}/g, fileName);
         return (`printf '%s\\n' "${input}" | timeout ${timeoutSeconds}s docker run --rm -i ` +
             `--memory=${memoryLimit}m ` +
@@ -224,9 +220,9 @@ class BaseExecutor {
             `--cap-drop=ALL ` +
             `--pids-limit=50 ` +
             `-v "${this.tempExecutionDir}/${fileName}:/tmp/${fileName}:ro" ` +
-            `gcc:12.4.0-bookworm ` +
+            `${this.dockerImage} ` +
             // `bash -c "cd /tmp && g++ -std=c++17 -O2 -o solution ${fileName} 2>&1 && ./solution 2>&1"`
-            `bash -c "${runCmd}"`);
+            `${this.shell} -c "${runCmd}"`);
     }
     escapeInput(input) {
         return input.replace(/"/g, '\\"').replace(/\$/g, "\\").replace(/`/g, "\\`");

@@ -9,6 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetUser } from 'src/common';
+import { CreateSubmissionDto } from './dto/create-submission.dto';
 
 @ApiTags('submissions')
 @Controller('submissions')
@@ -35,7 +36,10 @@ export class SubmissionsController {
     description: 'Submission result from judge system.',
   })
   @UseGuards(JwtAuthGuard)
-  makeSubmission(@GetUser('id') userId: string, @Body() body: any) {
+  makeSubmission(
+    @GetUser('id') userId: string,
+    @Body() body: CreateSubmissionDto,
+  ) {
     return this.submissionsService.createSubmission(userId, body);
   }
 
@@ -43,5 +47,15 @@ export class SubmissionsController {
   @UseGuards(JwtAuthGuard)
   checkSubmission(@Param('id') id: string) {
     return this.submissionsService.getSubmissionStatus(id);
+  }
+
+  @Get('/get-me/:id')
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthGuard)
+  getSubmissions(
+    @GetUser('id') userId: string,
+    @Param('id') problemId: string,
+  ) {
+    return this.submissionsService.getSubmissions(userId, problemId);
   }
 }

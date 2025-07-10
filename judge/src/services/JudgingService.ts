@@ -31,37 +31,24 @@ export class JudgingService {
       });
 
       // Get problem template and input format
-      const [problemTemplate, inputFormat, outputFormat, problem] =
-        await Promise.all([
-          this.prisma.problemTemplate.findUnique({
-            where: {
-              problemId_language: {
-                problemId: submission.problemId,
-                language: submission.language.toLowerCase(),
-              },
+      const [problemTemplate, problem] = await Promise.all([
+        this.prisma.problemTemplate.findUnique({
+          where: {
+            problemId_language: {
+              problemId: submission.problemId,
+              language: submission.language.toLowerCase(),
             },
-          }),
-          this.prisma.inputFormat.findFirst({
-            where: { problemId: submission.problemId },
-          }),
-          this.prisma.outputFormat.findFirst({
-            where: { problemId: submission.problemId },
-          }),
-          this.prisma.problem.findUnique({
-            where: { id: submission.problemId },
-          }),
-        ]);
+          },
+        }),
+        this.prisma.problem.findUnique({
+          where: { id: submission.problemId },
+        }),
+      ]);
 
       if (!problemTemplate) {
         throw new Error(
           `No template found for language: ${submission.language}`,
         );
-      }
-      if (!inputFormat) {
-        throw new Error(`No input format found for this problem`);
-      }
-      if (!outputFormat) {
-        throw new Error(`No output format found for this problem`);
       }
       if (!problem) {
         throw new Error(`Problem not found`);
@@ -133,7 +120,7 @@ export class JudgingService {
           isHidden: testCase.isHidden || false,
           weight: 1,
         };
-        console.log("Before Code Execution");
+
         // Execute code
         const result = await executor.executeCode(
           submission.code,
@@ -151,7 +138,6 @@ export class JudgingService {
             //   outputFormat.formatType as InputFormatType,
             // ),
             testCase.expectedOutput,
-            outputFormat.formatType,
           );
           console.log("isCorrect: ", isCorrect);
         }

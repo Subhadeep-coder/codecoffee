@@ -28,35 +28,8 @@ class ProblemTemplateDto {
   @IsString()
   template: string; // base64 encoded
 
-  @IsOptional()
   @IsString()
-  mainClass?: string;
-
-  @IsString()
-  methodName: string;
-
-  @IsString()
-  returnType: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  paramTypes: string[];
-}
-
-class InputFormatDto {
-  @IsString()
-  formatType: string;
-
-  @IsString()
-  parseMethod: string;
-}
-
-class OutputFormatDto {
-  @IsString()
-  formatType: string;
-
-  @IsString()
-  parseMethod: string;
+  templateIdentifier: string;
 }
 
 export class CreateProblemsDto {
@@ -102,16 +75,4 @@ export class CreateProblemsDto {
   @ValidateNested({ each: true })
   @Type(() => ProblemTemplateDto)
   problemTemplates?: ProblemTemplateDto[];
-
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => InputFormatDto)
-  inputFormats?: InputFormatDto[];
-
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => OutputFormatDto)
-  outputFormats?: OutputFormatDto[];
 }

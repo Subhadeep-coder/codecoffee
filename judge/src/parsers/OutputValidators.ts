@@ -2,18 +2,22 @@
 // Utility functions to validate outputs for different formats
 
 export class OutputValidators {
-  static validate(actual: any, expected: any, format: string): boolean {
+  static validate(
+    actual: any,
+    expected: any,
+    format: string = "string",
+  ): boolean {
     switch (format) {
-      case 'array':
-      case 'matrix':
+      case "array":
+      case "matrix":
         return OutputValidators.deepEqual(actual, expected);
-      case 'tree':
+      case "tree":
         return OutputValidators.deepEqual(actual, expected);
-      case 'graph':
+      case "graph":
         return OutputValidators.deepEqual(actual, expected);
-      case 'number':
+      case "number":
         return Number(actual) === Number(expected);
-      case 'string':
+      case "string":
         return String(actual).trim() === String(expected).trim();
       default:
         return String(actual).trim() === String(expected).trim();

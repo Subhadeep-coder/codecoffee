@@ -123,6 +123,14 @@ export class ProblemsController {
     return this.problemsService.getProblemById(slug);
   }
 
+  @ApiOperation({ summary: 'Get your created problem.' })
+  @ApiBearerAuth('JWT-auth')
+  @Get('/get/me')
+  @UseGuards(JwtAuthGuard)
+  getMyProblems(@GetUser('id') userId: string) {
+    return this.problemsService.getMyProblems(userId);
+  }
+
   @ApiOperation({ summary: 'Create a new problem.' })
   @ApiBearerAuth('JWT-auth')
   @ApiBody({ type: CreateProblemsDto })

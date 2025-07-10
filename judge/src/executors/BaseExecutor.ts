@@ -14,6 +14,7 @@ export abstract class BaseExecutor {
   protected abstract readonly runCommand: string;
   protected abstract readonly dockerImage: string;
   protected abstract readonly mainFileName?: string;
+  protected readonly shell: string = "bash";
   protected tempExecutionDir: string = "/";
 
   private async checkDockerAvailability(): Promise<boolean> {
@@ -160,9 +161,9 @@ export abstract class BaseExecutor {
         timeout: testCase.timeLimit + 100000, // Add 5s buffer for Docker overhead
         maxBuffer: 10 * 1024 * 1024, // 10MB output limit
       });
-      // console.log("After Execution");
-      // console.log("Stdout: ", stdout);
-      // console.log("Stderr: ", stderr);
+      console.log("After Execution");
+      console.log("Stdout: ", stdout);
+      console.log("Stderr: ", stderr);
       const runtime = Date.now() - startTime;
 
       // Parse Docker stats output to get actual memory usage
@@ -193,6 +194,8 @@ export abstract class BaseExecutor {
         memory: memoryUsage,
       };
     } catch (error: any) {
+      console.log("Error in execute function: ");
+      console.log(error);
       const runtime = Date.now() - Date.now();
 
       if (error.code === "TIMEOUT" || error.killed) {
@@ -233,9 +236,9 @@ export abstract class BaseExecutor {
       `--cap-drop=ALL ` +
       `--pids-limit=50 ` +
       `-v "${this.tempExecutionDir}/${fileName}:/tmp/${fileName}:ro" ` +
-      `gcc:12.4.0-bookworm ` +
+      `${this.dockerImage} ` +
       // `bash -c "cd /tmp && g++ -std=c++17 -O2 -o solution ${fileName} 2>&1 && ./solution 2>&1"`
-      `bash -c "${runCmd}"`
+      `${this.shell} -c "${runCmd}"`
     );
   }
 

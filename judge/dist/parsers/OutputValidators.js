@@ -4,18 +4,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OutputValidators = void 0;
 class OutputValidators {
-    static validate(actual, expected, format) {
+    static validate(actual, expected, format = "string") {
         switch (format) {
-            case 'array':
-            case 'matrix':
+            case "array":
+            case "matrix":
                 return OutputValidators.deepEqual(actual, expected);
-            case 'tree':
+            case "tree":
                 return OutputValidators.deepEqual(actual, expected);
-            case 'graph':
+            case "graph":
                 return OutputValidators.deepEqual(actual, expected);
-            case 'number':
+            case "number":
                 return Number(actual) === Number(expected);
-            case 'string':
+            case "string":
                 return String(actual).trim() === String(expected).trim();
             default:
                 return String(actual).trim() === String(expected).trim();

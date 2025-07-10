@@ -104,7 +104,6 @@ exports.app.post("/submission", (req, res) => __awaiter(void 0, void 0, void 0, 
 // Get submission result
 exports.app.get("/submission/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log("Here in the get submission request");
         const { id: submissionId } = req.params;
         if (!submissionId) {
             return res.status(400).json({ error: "Missing submissionId" });

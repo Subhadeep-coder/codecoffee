@@ -29,7 +29,7 @@ class JudgingService {
                     data: { status: client_1.SubmissionStatus.PENDING },
                 });
                 // Get problem template and input format
-                const [problemTemplate, inputFormat, outputFormat, problem] = yield Promise.all([
+                const [problemTemplate, problem] = yield Promise.all([
                     this.prisma.problemTemplate.findUnique({
                         where: {
                             problemId_language: {
@@ -38,24 +38,12 @@ class JudgingService {
                             },
                         },
                     }),
-                    this.prisma.inputFormat.findFirst({
-                        where: { problemId: submission.problemId },
-                    }),
-                    this.prisma.outputFormat.findFirst({
-                        where: { problemId: submission.problemId },
-                    }),
                     this.prisma.problem.findUnique({
                         where: { id: submission.problemId },
                     }),
                 ]);
                 if (!problemTemplate) {
                     throw new Error(`No template found for language: ${submission.language}`);
-                }
-                if (!inputFormat) {
-                    throw new Error(`No input format found for this problem`);
-                }
-                if (!outputFormat) {
-                    throw new Error(`No output format found for this problem`);
                 }
                 if (!problem) {
                     throw new Error(`Problem not found`);
@@ -116,7 +104,6 @@ class JudgingService {
                         isHidden: testCase.isHidden || false,
                         weight: 1,
                     };
-                    console.log("Before Code Execution");
                     // Execute code
                     const result = yield executor.executeCode(submission.code, testCaseInput);
                     console.log("After Code Execution, Result: ", result);
@@ -128,7 +115,7 @@ class JudgingService {
                         //   result.output,
                         //   outputFormat.formatType as InputFormatType,
                         // ),
-                        testCase.expectedOutput, outputFormat.formatType);
+                        testCase.expectedOutput);
                         console.log("isCorrect: ", isCorrect);
                     }
                     const testCaseResult = {

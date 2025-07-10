@@ -106,8 +106,6 @@ model Problem {
   bookmarks       Bookmark[]
   contestProblems ContestProblem[]
   problemTemplate ProblemTemplate[]
-  inputFormat     InputFormat[]
-  outputFormat    OutputFormat[]
 
   @@index([difficulty])
   @@index([createdBy])
@@ -378,40 +376,13 @@ model ProblemTemplate {
   problemId  String
   language   String
   template   String   @db.Text
-  mainClass  String? // For languages like Java
-  methodName String // The method/function that should be implemented
-  returnType String // The expected return type
-  paramTypes String[] // Array of parameter types
+  templateIdentifier  String
 
   problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
   @@unique([problemId, language])
   @@index([problemId])
   @@map("problem_templates")
-}
-
-model InputFormat {
-  id          String @id @default(cuid())
-  problemId   String
-  formatType  String // array, tree, graph, matrix, etc.
-  parseMethod String // How to parse this input (e.g., "array", "binaryTree", "graph")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@index([problemId])
-  @@map("input_formats")
-}
-
-model OutputFormat {
-  id          String @id @default(cuid())
-  problemId   String
-  formatType  String // array, tree, graph, matrix, string, number, etc.
-  parseMethod String // How to parse this output (e.g., "array", "binaryTree", "graph")
-
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@index([problemId])
-  @@map("output_formats")
 }
 
 enum AuthProvider {
