@@ -14,7 +14,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useProblemsStore, type Problem } from "@/stores/problems-store";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { SubmissionResults } from "@/components/problems/SubmissionResults";
+import { SubmissionHistory } from "@/components/problems/SubmissionResults";
 
 export default function ProblemPage() {
   const params = useParams();
@@ -175,7 +175,7 @@ export default function ProblemPage() {
               ) : activeTab === "comments" ? (
                 <ProblemComments problemId={currentProblem.id} />
               ) : (
-                <SubmissionResults submissionResult={submissionResult} />
+                <SubmissionHistory problemId={currentProblem.id} />
               )}
             </div>
           </div>

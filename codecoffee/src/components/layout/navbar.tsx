@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { UserAvatar } from "../user/user-avatar";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,16 +72,13 @@ export function Navbar() {
                     variant="ghost"
                     className="relative h-8 w-8 rounded-full"
                   >
-                    <User className="h-4 w-4" />
+                    <UserAvatar profilePic={user?.avatar!} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
                       <p className="font-medium">{user?.username || "User"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {user?.email || "user@example.com"}
-                      </p>
                     </div>
                   </div>
                   <DropdownMenuSeparator />

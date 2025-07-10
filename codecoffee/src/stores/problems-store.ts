@@ -18,10 +18,7 @@ interface ProblemTemplate {
   problemId: string;
   language: string;
   template: string;
-  mainClass: string;
-  methodName: string;
-  returnType: string;
-  paramTypes: string[];
+  templateIdentifier: string;
 }
 
 interface InputFormat {
