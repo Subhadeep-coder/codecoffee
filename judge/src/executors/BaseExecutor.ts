@@ -194,8 +194,6 @@ export abstract class BaseExecutor {
         memory: memoryUsage,
       };
     } catch (error: any) {
-      console.log("Error in execute function: ");
-      console.log(error);
       const runtime = Date.now() - Date.now();
 
       if (error.code === "TIMEOUT" || error.killed) {
@@ -220,10 +218,10 @@ export abstract class BaseExecutor {
     // const timeoutSeconds = Math.ceil(testCase.timeLimit / 1000);
     const timeoutSeconds = 10;
     const memoryLimit = testCase.memoryLimit;
-    const input = testCase.input;
-    // .replace(/"/g, '\\"')
-    // .replace(/\$/g, "\\$")
-    // .replace(/`/g, "\\`");
+    const input = testCase.input
+      .replace(/"/g, '\\"')
+      .replace(/\$/g, "\\$")
+      .replace(/`/g, "\\`");
     const runCmd = this.runCommand.replace(/\$\{fileName\}/g, fileName);
 
     return (

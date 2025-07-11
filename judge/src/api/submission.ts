@@ -32,7 +32,7 @@ const judgingService = new JudgingService();
 app.post("/submission", async (req: Request, res: Response): Promise<any> => {
   try {
     const { problemId, code, language, userId } = req.body;
-
+    const { mode = "run" } = req.query;
     // Use default userId if not provided (for testing)
     // const actualUserId = userId || "default-user-id";
 
@@ -40,6 +40,7 @@ app.post("/submission", async (req: Request, res: Response): Promise<any> => {
       problemId,
       language,
       codeLength: code?.length,
+      mode,
     });
 
     if (!problemId || !code || !language) {
@@ -65,37 +66,56 @@ app.post("/submission", async (req: Request, res: Response): Promise<any> => {
       });
     }
 
-    // Create submission record
-    const submission = await prisma.submission.create({
-      data: {
+    if (mode === "submit") {
+      console.log("Here");
+      // Create submission record
+      const submission = await prisma.submission.create({
+        data: {
+          userId: userId,
+          problemId,
+          code,
+          language: language.toLowerCase(),
+          status: "PENDING",
+          submittedAt: new Date(),
+        },
+      });
+
+      // Add to processing queue
+      await submissionQueue.addSubmission({
+        id: submission.id,
         userId: userId,
         problemId,
         code,
         language: language.toLowerCase(),
-        status: "PENDING",
-        submittedAt: new Date(),
-      },
-    });
+        mode: "submit",
+      });
+      console.log(`Submission ${submission.id} added to queue`);
 
-    // Add to processing queue
+      return res.status(201).json({
+        submissionId: submission.id,
+        status: "PENDING",
+        message: "Submission added to judging queue",
+      });
+    }
+
     await submissionQueue.addSubmission({
-      id: submission.id,
+      id: `run:${problemId}`,
       userId: userId,
       problemId,
       code,
       language: language.toLowerCase(),
+      mode: "run",
     });
+    console.log(`Test run:${problemId} added to queue`);
 
-    console.log(`Submission ${submission.id} added to queue`);
-
-    res.status(201).json({
-      submissionId: submission.id,
+    return res.status(201).json({
+      submissionId: `run:${problemId}`,
       status: "PENDING",
-      message: "Submission added to judging queue",
+      message: "Test added to judging queue",
     });
   } catch (error) {
     console.error("Submission error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       error: "Internal server error",
       message: error instanceof Error ? error.message : "Unknown error",
     });

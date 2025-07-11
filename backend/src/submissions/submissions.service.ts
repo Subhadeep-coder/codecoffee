@@ -1,30 +1,39 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateSubmissionDto } from './dto/create-submission.dto';
+
+interface SubmissionRequest {
+  problemId: string;
+  code: string;
+  language: string;
+  userId: string;
+  mode: 'run' | 'submit';
+}
 
 @Injectable()
 export class SubmissionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createSubmission(
-    userId: string,
-    createSubmissionDto: CreateSubmissionDto,
-  ) {
+  async createSubmission(submission: SubmissionRequest) {
     // Build the body dynamically from the DTO
-    const { problemId, code, language } = createSubmissionDto;
+    const { problemId, code, language, userId, mode } = submission;
     const soucreCode = Buffer.from(code, 'base64').toString('utf-8');
-    const response = await fetch('http://localhost:9000/submission', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    // When mode is 'run', we only want to execute visible test cases
+    const response = await fetch(
+      `http://localhost:9000/submission?mode=${mode}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          problemId,
+          code: soucreCode,
+          language,
+          userId,
+          mode, // Pass mode to judge system
+        }),
       },
-      body: JSON.stringify({
-        problemId,
-        code: soucreCode,
-        language,
-        userId,
-      }),
-    });
+    );
 
     console.log('Response: ', response);
     const result = await response.json();

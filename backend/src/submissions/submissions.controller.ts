@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import {
   ApiTags,
@@ -6,6 +6,7 @@ import {
   ApiBody,
   ApiResponse,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetUser } from 'src/common';
@@ -17,7 +18,16 @@ export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
 
   @Post('create')
-  @ApiOperation({ summary: 'Submit code for a problem to the judge system.' })
+  @ApiOperation({
+    summary: 'Submit or run code for a problem',
+    description: 'Run mode only executes visible test cases, Submit mode runs all test cases',
+  })
+  @ApiQuery({
+    name: 'mode',
+    required: false,
+    enum: ['run', 'submit'],
+    description: 'Execution mode - run (sample test cases) or submit (all test cases)',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -25,9 +35,8 @@ export class SubmissionsController {
         problemId: { type: 'string', example: 'cmclyc8jv0001i0dz24ehcn9b' },
         code: { type: 'string', example: 'public class Main { ... }' },
         language: { type: 'string', example: 'cpp' },
-        userId: { type: 'string', example: 'cmcl2urzc0000i00e4zcnwslb' },
       },
-      required: ['problemId', 'code', 'language', 'userId'],
+      required: ['problemId', 'code', 'language'],
     },
   })
   @ApiBearerAuth('JWT-auth')
@@ -38,9 +47,14 @@ export class SubmissionsController {
   @UseGuards(JwtAuthGuard)
   makeSubmission(
     @GetUser('id') userId: string,
-    @Body() body: CreateSubmissionDto,
+    @Body() createSubmissionDto: CreateSubmissionDto,
+    @Query('mode') mode: 'run' | 'submit' = 'submit',
   ) {
-    return this.submissionsService.createSubmission(userId, body);
+    return this.submissionsService.createSubmission({
+      ...createSubmissionDto,
+      userId,
+      mode,
+    });
   }
 
   @Get('/:id')

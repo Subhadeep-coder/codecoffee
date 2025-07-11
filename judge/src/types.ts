@@ -4,6 +4,7 @@ export interface SubmissionRequest {
   problemId: string;
   code: string;
   language: string;
+  mode: 'run' | 'submit';
 }
 
 export interface TestCase {

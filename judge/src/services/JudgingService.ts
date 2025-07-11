@@ -7,9 +7,6 @@ import {
   TestCaseResult,
   TestCase,
 } from "../types";
-import { InputParsers, InputFormatType } from "../parsers/InputParsers";
-import { OutputValidators } from "../parsers/OutputValidators";
-import { OutputParsers } from "../parsers/OutputParsers";
 
 export class JudgingService {
   private prisma: PrismaClient;
@@ -30,6 +27,19 @@ export class JudgingService {
         data: { status: SubmissionStatus.PENDING },
       });
 
+      // Get test cases based on mode
+      const testCases = await this.prisma.testCase.findMany({
+        where: {
+          problemId: submission.problemId,
+          ...(submission.mode === 'run' && { isHidden: false }), // Only visible test cases for run mode
+        },
+        orderBy: { id: "asc" },
+      });
+
+      if (testCases.length === 0) {
+        throw new Error("No test cases found for this problem");
+      }
+
       // Get problem template and input format
       const [problemTemplate, problem] = await Promise.all([
         this.prisma.problemTemplate.findUnique({
@@ -45,38 +55,10 @@ export class JudgingService {
         }),
       ]);
 
-      if (!problemTemplate) {
-        throw new Error(
-          `No template found for language: ${submission.language}`,
-        );
-      }
-      if (!problem) {
-        throw new Error(`Problem not found`);
-      }
-
-      // Get test cases for the problem
-      const testCases = await this.prisma.testCase.findMany({
-        where: { problemId: submission.problemId },
-        orderBy: { id: "asc" },
-      });
-      if (testCases.length === 0) {
-        throw new Error("No test cases found for this problem");
-      }
-      console.log("Testcases: ", testCases);
       // Validate language support
-      if (
-        !ExecutorFactory.getSupportedLanguages().includes(
-          submission.language.toLowerCase(),
-        )
-      ) {
+      if (!ExecutorFactory.getSupportedLanguages().includes(submission.language.toLowerCase())) {
         throw new Error(`Unsupported language: ${submission.language}`);
       }
-
-      // Prepare code: concatenate user code with template
-      // const wrappedCode = TemplateManager.getTemplate(submission.language, {
-      //   ...problemTemplate,
-      //   userCode: submission.code,
-      // });
 
       // Get executor for the language
       const executor = ExecutorFactory.getExecutor(submission.language);
@@ -86,31 +68,12 @@ export class JudgingService {
       let totalRuntime = 0;
       let maxMemory = 0;
       let passedCount = 0;
-      let shouldStopOnError = true; // Stop on first error for efficiency
 
+      // Execute all test cases regardless of failures
       for (let i = 0; i < testCases.length; i++) {
         const testCase = testCases[i];
-        // Parse input and expected output
-        // let parsedInput: any, parsedExpected: any;
-        try {
-          // parsedInput = InputParsers.parse(
-          //   testCase.input,
-          //   inputFormat.formatType as InputFormatType,
-          // );
-          // parsedExpected = OutputParsers.parse(
-          //   testCase.expectedOutput,
-          //   outputFormat.formatType as InputFormatType,
-          // );
-        } catch (e) {
-          console.error("Parsing error:", e);
-          throw new Error(
-            `Input/Output parsing failed: ${e instanceof Error ? e.message : String(e)}`,
-          );
-        }
+        console.log(`Running test case ${i + 1}/${testCases.length} for submission ${submission.id}`);
 
-        // console.log("Parsed Input: ", parsedInput);
-        // console.log("Parsed Output: ", parsedExpected);
-        // Prepare testCaseInput for executor
         const testCaseInput: TestCase = {
           id: testCase.id,
           input: testCase.input,
@@ -121,67 +84,39 @@ export class JudgingService {
           weight: 1,
         };
 
-        // Execute code
-        const result = await executor.executeCode(
-          submission.code,
-          testCaseInput,
-        );
-
-        console.log("After Code Execution, Result: ", result);
-        // Validate output
-        let isCorrect = false;
-        if (result.status === "ACCEPTED" && result.output !== undefined) {
-          isCorrect = OutputValidators.validate(
-            result.output,
-            // OutputParsers.parse(
-            //   result.output,
-            //   outputFormat.formatType as InputFormatType,
-            // ),
-            testCase.expectedOutput,
-          );
-          console.log("isCorrect: ", isCorrect);
-        }
+        const result = await executor.executeCode(submission.code, testCaseInput);
 
         const testCaseResult: TestCaseResult = {
           testCaseId: testCase.id,
-          status: isCorrect ? "ACCEPTED" : result.status,
+          status: result.status,
           runtime: result.runtime,
           memory: result.memory,
           input: testCase.isHidden ? "[Hidden]" : testCase.input,
-          expectedOutput: testCase.isHidden
-            ? "[Hidden]"
-            : testCase.expectedOutput,
-          actualOutput:
-            testCase.isHidden && !isCorrect ? "[Hidden]" : result.output,
+          expectedOutput: testCase.isHidden ? "[Hidden]" : testCase.expectedOutput,
+          actualOutput: testCase.isHidden && result.status !== "ACCEPTED" ? "[Hidden]" : result.output,
           errorMessage: result.errorMessage,
         };
+
         testCaseResults.push(testCaseResult);
-        if (isCorrect) passedCount++;
+
+        if (result.status === "ACCEPTED") {
+          passedCount++;
+        }
+
+        // Accumulate statistics
         if (result.runtime) totalRuntime += result.runtime;
         if (result.memory) maxMemory = Math.max(maxMemory, result.memory);
-        if (shouldStopOnError && !isCorrect) break;
       }
 
       // Determine overall status
-      let overallStatus: string;
-      if (passedCount === testCases.length) {
-        overallStatus = "ACCEPTED";
-      } else {
-        const failedResult = testCaseResults.find(
-          (r) => r.status !== "ACCEPTED",
-        );
-        overallStatus = failedResult?.status || "WRONG_ANSWER";
-      }
+      const overallStatus = passedCount === testCases.length ? "ACCEPTED" : "WRONG_ANSWER";
 
       const judgeResult: JudgeResult = {
         submissionId: submission.id,
         status: overallStatus,
         testCasesPassed: passedCount,
         totalTestCases: testCases.length,
-        runtime:
-          testCaseResults.length > 0 && totalRuntime > 0
-            ? Math.floor(totalRuntime / testCaseResults.length)
-            : undefined,
+        runtime: testCaseResults.length > 0 ? Math.floor(totalRuntime / testCaseResults.length) : undefined,
         memory: maxMemory > 0 ? maxMemory : undefined,
         testCaseResults,
       };
@@ -189,13 +124,10 @@ export class JudgingService {
       // Update submission in database
       await this.updateSubmissionResult(judgeResult);
 
-      console.log(
-        `Completed submission ${submission.id} with status ${judgeResult.status}`,
-      );
+      console.log(`Completed submission ${submission.id} with status ${judgeResult.status}`);
       return judgeResult;
     } catch (error) {
       console.error(`Error processing submission ${submission.id}:`, error);
-
       const errorResult: JudgeResult = {
         submissionId: submission.id,
         status: "INTERNAL_ERROR",
@@ -204,7 +136,6 @@ export class JudgingService {
         errorMessage: error instanceof Error ? error.message : "Unknown error",
         testCaseResults: [],
       };
-
       await this.updateSubmissionResult(errorResult);
       return errorResult;
     }

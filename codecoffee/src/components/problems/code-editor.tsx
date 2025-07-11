@@ -184,7 +184,7 @@ export function CodeEditor({
     return originalTemplate.replace(regex, code);
   };
 
-  const handleRun = async () => {
+  const handleRun = async (mode: "submit" | "run") => {
     setIsRunning(true);
     setOutput("Submitting code...");
     setActiveBottomTab("output"); // Switch to output tab when running
@@ -194,7 +194,7 @@ export function CodeEditor({
 
       // First API call - create submission
       const createResponse = await api.post(
-        "/submissions/create",
+        `/submissions/create?mode=${mode}`,
         {
           problemId: problemId,
           language: language,
@@ -335,9 +335,22 @@ export function CodeEditor({
               <RotateCcw className="h-4 w-4 mr-1" />
               Reset
             </Button>
-            <Button size="sm" onClick={handleRun} disabled={isRunning}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleRun("run")}
+              disabled={isRunning}
+            >
               <Play className="h-4 w-4 mr-1" />
-              {isRunning ? "Running..." : "Run Code"}
+              {isRunning ? "Running..." : "Run"}
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleRun("submit")}
+              disabled={isRunning}
+            >
+              <Play className="h-4 w-4 mr-1" />
+              {isRunning ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </div>
