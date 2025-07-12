@@ -10,6 +10,7 @@ import {
   Star,
   Clock,
   Target,
+  Hash,
 } from "lucide-react";
 import { CreateProblemsDto } from "@/types/problem";
 
@@ -278,14 +279,35 @@ export function ProblemPreview({ problem }: ProblemPreviewProps) {
                 key={index}
                 className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
               >
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge variant="outline">{template.language}</Badge>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{template.language}</Badge>
+                    {template.identifier && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                        <Hash className="h-3 w-3" />
+                        <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+                          {template.templateIdentifier}
+                        </code>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Template {index + 1}
+                  </div>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
                   <pre className="text-sm font-mono overflow-x-auto text-black dark:text-white">
                     {template.template || "// No template code provided"}
                   </pre>
                 </div>
+                {template.templateIdentifier && (
+                  <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                    <span className="font-medium">Template ID:</span>{" "}
+                    <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+                      {template.templateIdentifier}
+                    </code>
+                  </div>
+                )}
               </div>
             ))}
           </CardContent>

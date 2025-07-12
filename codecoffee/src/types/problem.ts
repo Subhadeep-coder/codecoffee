@@ -71,3 +71,10 @@ export const PROGRAMMING_LANGUAGES = [
   "Ruby",
   "TypeScript",
 ];
+
+export interface ProblemInContestSearch {
+  id: string;
+  title: string;
+  difficulty: string;
+  tags: string[];
+}

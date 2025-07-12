@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Code } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, Trash2, Code, Hash } from "lucide-react";
 import {
   CreateProblemsDto,
   ProblemTemplateDto,
@@ -21,7 +22,13 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
     if (!problem.problemTemplates || problem.problemTemplates.length === 0) {
       setProblem((prev) => ({
         ...prev,
-        problemTemplates: [{ language: "JavaScript", template: "" }],
+        problemTemplates: [
+          {
+            language: "JavaScript",
+            template: "",
+            identifier: "javascript-starter",
+          },
+        ],
       }));
     }
   }, [problem.problemTemplates, setProblem]);
@@ -36,11 +43,19 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
     const nextLanguage =
       availableLanguages.length > 0 ? availableLanguages[0] : "JavaScript";
 
+    // Generate default identifier based on language
+    const defaultIdentifier =
+      nextLanguage.toLowerCase().replace(/\s+/g, "-") + "-starter";
+
     setProblem((prev) => ({
       ...prev,
       problemTemplates: [
         ...(prev.problemTemplates || []),
-        { language: nextLanguage, template: "" },
+        {
+          language: nextLanguage,
+          template: "",
+          identifier: defaultIdentifier,
+        },
       ],
     }));
   };
@@ -85,6 +100,23 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
     );
   };
 
+  const validateIdentifier = (identifier: string) => {
+    // Check if identifier is unique
+    const identifiers =
+      problem.problemTemplates?.map((t) => t.identifier) || [];
+    const count = identifiers.filter((id) => id === identifier).length;
+    return count <= 1;
+  };
+
+  const formatIdentifier = (value: string) => {
+    // Auto-format identifier to be URL-friendly
+    return value
+      .toLowerCase()
+      .replace(/[^a-z0-9\-_]/g, "-")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  };
+
   return (
     <Card className="border-gray-200 dark:border-gray-800">
       <CardHeader>
@@ -122,23 +154,58 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
                 </div>
               </div>
 
-              <div>
-                <Label className="font-medium text-black dark:text-white mb-2 block">
-                  Programming Language
-                </Label>
-                <select
-                  value={template.language}
-                  onChange={(e) =>
-                    updateTemplate(index, "language", e.target.value)
-                  }
-                  className="w-full rounded-md border border-gray-200 dark:border-gray-800 bg-white dark:bg-black text-black dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                >
-                  {getAvailableLanguages(index).map((lang) => (
-                    <option key={lang} value={lang}>
-                      {lang}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="font-medium text-black dark:text-white mb-2 block">
+                    Programming Language
+                  </Label>
+                  <select
+                    value={template.language}
+                    onChange={(e) => {
+                      updateTemplate(index, "language", e.target.value);
+                      // Auto-update identifier when language changes
+                      const newIdentifier =
+                        e.target.value.toLowerCase().replace(/\s+/g, "-") +
+                        "-starter";
+                      updateTemplate(index, "identifier", newIdentifier);
+                    }}
+                    className="w-full rounded-md border border-gray-200 dark:border-gray-800 bg-white dark:bg-black text-black dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  >
+                    {getAvailableLanguages(index).map((lang) => (
+                      <option key={lang} value={lang}>
+                        {lang}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="font-medium text-black dark:text-white mb-2 block">
+                    <Hash className="h-4 w-4 inline mr-1" />
+                    Template Identifier
+                  </Label>
+                  <Input
+                    value={template.identifier || ""}
+                    onChange={(e) => {
+                      const formatted = formatIdentifier(e.target.value);
+                      updateTemplate(index, "identifier", formatted);
+                    }}
+                    placeholder="e.g., javascript-starter"
+                    className={`${
+                      !validateIdentifier(template.identifier || "")
+                        ? "border-red-500 focus:ring-red-500"
+                        : ""
+                    }`}
+                  />
+                  {!validateIdentifier(template.identifier || "") && (
+                    <p className="text-red-500 text-xs mt-1">
+                      Identifier must be unique
+                    </p>
+                  )}
+                  <p className="text-gray-500 text-xs mt-1">
+                    Unique identifier for this template (auto-formatted)
+                  </p>
+                </div>
               </div>
 
               <div>
@@ -166,6 +233,7 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
                       <li>Add helpful comments to guide users</li>
                       <li>Use meaningful variable names</li>
                       <li>Consider adding example usage in comments</li>
+                      <li>Ensure the identifier is unique and descriptive</li>
                     </ul>
                   </div>
                 </div>
@@ -192,6 +260,7 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
                 • Consider different skill levels - from beginner to advanced
               </p>
               <p>• Test your templates to ensure they work correctly</p>
+              <p>• Use unique, descriptive identifiers for each template</p>
             </div>
           </div>
         )}
