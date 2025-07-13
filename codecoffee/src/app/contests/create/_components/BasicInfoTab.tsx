@@ -9,11 +9,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Contest, ContestType } from "@/types/contest";
+import { CreateContestDto, ContestType } from "@/types/contest";
 
 interface BasicInfoTabProps {
-  contest: Contest;
-  setContest: React.Dispatch<React.SetStateAction<Contest>>;
+  contest: CreateContestDto;
+  setContest: React.Dispatch<React.SetStateAction<CreateContestDto>>;
 }
 
 export const BasicInfoTab = ({ contest, setContest }: BasicInfoTabProps) => {

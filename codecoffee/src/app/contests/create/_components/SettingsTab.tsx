@@ -2,11 +2,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Contest } from "@/types/contest";
+import { CreateContestDto } from "@/types/contest";
 
 interface SettingsTabProps {
-  contest: Contest;
-  setContest: React.Dispatch<React.SetStateAction<Contest>>;
+  contest: CreateContestDto;
+  setContest: React.Dispatch<React.SetStateAction<CreateContestDto>>;
 }
 
 export const SettingsTab = ({ contest, setContest }: SettingsTabProps) => {

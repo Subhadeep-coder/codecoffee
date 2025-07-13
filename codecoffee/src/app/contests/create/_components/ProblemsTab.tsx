@@ -1,23 +1,27 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Contest } from "@/types/contest";
+import { CreateContestDto } from "@/types/contest";
 import { Search, X } from "lucide-react";
 import { ProblemInContestSearch } from "@/types/problem";
 import { useDebounceSearchProblems } from "@/hooks/useSearchProblems";
 
 interface ProblemsTabProps {
-  contest: Contest;
-  setContest: React.Dispatch<React.SetStateAction<Contest>>;
+  contest: CreateContestDto;
+  setContest: React.Dispatch<React.SetStateAction<CreateContestDto>>;
+  problems: ProblemInContestSearch[];
+  setProblems: React.Dispatch<React.SetStateAction<ProblemInContestSearch[]>>;
 }
 
-export const ProblemsTab = ({ contest, setContest }: ProblemsTabProps) => {
-  const [selectedProblems, setSelectedProblems] = useState<
-    ProblemInContestSearch[]
-  >([]);
+export const ProblemsTab = ({
+  contest,
+  setContest,
+  problems,
+  setProblems,
+}: ProblemsTabProps) => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const {
     problems: searchResults,
@@ -28,8 +32,8 @@ export const ProblemsTab = ({ contest, setContest }: ProblemsTabProps) => {
   const displayProblems = searchQuery.trim() ? searchResults : [];
 
   const handleProblemSelect = (problem: ProblemInContestSearch) => {
-    if (!selectedProblems.find((p) => p.id === problem.id)) {
-      setSelectedProblems([...selectedProblems, problem]);
+    if (!problems.find((p) => p.id === problem.id)) {
+      setProblems([...problems, problem]);
       setContest((prev) => ({
         ...prev,
         problemIds: [...prev.problemIds, problem.id],
@@ -38,7 +42,7 @@ export const ProblemsTab = ({ contest, setContest }: ProblemsTabProps) => {
   };
 
   const handleProblemRemove = (problemId: string) => {
-    setSelectedProblems(selectedProblems.filter((p) => p.id !== problemId));
+    setProblems(problems.filter((p) => p.id !== problemId));
     setContest((prev) => ({
       ...prev,
       problemIds: prev.problemIds.filter((id) => id !== problemId),
@@ -77,13 +81,13 @@ export const ProblemsTab = ({ contest, setContest }: ProblemsTabProps) => {
         </div>
 
         {/* Selected Problems */}
-        {selectedProblems.length > 0 && (
+        {problems.length > 0 && (
           <div>
             <Label className="text-sm font-medium text-black">
-              Selected Problems ({selectedProblems.length})
+              Selected Problems ({problems.length})
             </Label>
             <div className="mt-2 space-y-2">
-              {selectedProblems.map((problem) => (
+              {problems.map((problem) => (
                 <div
                   key={problem.id}
                   className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
@@ -127,7 +131,7 @@ export const ProblemsTab = ({ contest, setContest }: ProblemsTabProps) => {
               <div
                 key={problem.id}
                 className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                  selectedProblems.find((p) => p.id === problem.id)
+                  problems.find((p) => p.id === problem.id)
                     ? "border-gray-300 bg-gray-50"
                     : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                 }`}
@@ -142,7 +146,7 @@ export const ProblemsTab = ({ contest, setContest }: ProblemsTabProps) => {
                       {problem.difficulty}
                     </Badge>
                   </div>
-                  {selectedProblems.find((p) => p.id === problem.id) && (
+                  {problems.find((p) => p.id === problem.id) && (
                     <span className="text-sm text-gray-500">Selected</span>
                   )}
                 </div>

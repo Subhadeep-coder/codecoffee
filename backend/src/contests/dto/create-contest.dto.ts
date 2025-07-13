@@ -7,7 +7,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  // IsUUID,
   Max,
   MaxLength,
   Min,
@@ -36,7 +35,6 @@ export class CreateContestDto {
 
   @IsNumber()
   @Min(1)
-  @Max(1440) // Max 24 hours
   duration: number;
 
   @IsOptional()
@@ -54,6 +52,6 @@ export class CreateContestDto {
   penalty: number;
 
   @IsArray()
-  // @IsUUID('4', { each: true })
+  @IsString({ each: true })
   problemIds: string[];
 }

@@ -45,7 +45,7 @@ export class ContestsService {
           createdBy: userId,
         },
       });
-      console.log('Contest: ', contest);
+
       // Add problems to contest
       const contestProblems = problemIds.map((problemId, index) => ({
         contestId: contest.id,
@@ -53,8 +53,6 @@ export class ContestsService {
         order: index + 1,
         points: 100, // Default points, can be customized
       }));
-
-      console.log('Problems: ', contestProblems);
 
       await tx.contestProblem.createMany({
         data: contestProblems,
