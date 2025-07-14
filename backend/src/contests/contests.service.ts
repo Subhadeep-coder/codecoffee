@@ -69,8 +69,8 @@ export class ContestsService {
     });
   }
 
-  // Get contest by ID with full details
-  async getContestById(contestId: string) {
+  async getContestById(contestId: string, userId?: string) {
+    // First, get the basic contest info
     const contest = await this.prisma.contest.findUnique({
       where: { id: contestId },
       include: {
@@ -81,30 +81,6 @@ export class ContestsService {
             firstName: true,
             lastName: true,
             avatar: true,
-          },
-        },
-        problems: {
-          orderBy: { order: 'asc' },
-          include: {
-            problem: {
-              select: {
-                id: true,
-                title: true,
-                slug: true,
-                difficulty: true,
-                tags: true,
-                acceptanceRate: true,
-              },
-            },
-          },
-        },
-        participations: {
-          select: {
-            id: true,
-            userId: true,
-            score: true,
-            penalty: true,
-            rank: true,
           },
         },
         _count: {
@@ -119,7 +95,149 @@ export class ContestsService {
       throw new NotFoundException('Contest not found');
     }
 
-    return contest;
+    const isCreator = userId && contest.createdBy === userId;
+
+    let userParticipation: any = null;
+    if (userId) {
+      userParticipation = await this.prisma.contestParticipation.findUnique({
+        where: {
+          userId_contestId: {
+            userId,
+            contestId,
+          },
+        },
+      });
+    }
+
+    const isParticipant = !!userParticipation;
+
+    const now = new Date();
+    const isContestNotStarted = now < contest.startTime;
+    const isContestRunning = now >= contest.startTime && now <= contest.endTime;
+    const isContestEnded = now > contest.endTime;
+
+    const baseResponse = {
+      id: contest.id,
+      title: contest.title,
+      description: contest.description,
+      type: contest.type,
+      startTime: contest.startTime,
+      endTime: contest.endTime,
+      duration: contest.duration,
+      maxParticipants: contest.maxParticipants,
+      isRated: contest.isRated,
+      penalty: contest.penalty,
+      createdAt: contest.createdAt,
+      updatedAt: contest.updatedAt,
+      creator: contest.creator,
+      participantCount: contest._count.participations,
+      userRole: isCreator
+        ? 'CREATOR'
+        : isParticipant
+          ? 'PARTICIPANT'
+          : 'VIEWER',
+      isParticipating: isParticipant,
+      canViewProblems:
+        isCreator || (isParticipant && (isContestRunning || isContestEnded)),
+      contestStatus: isContestNotStarted
+        ? 'NOT_STARTED'
+        : isContestRunning
+          ? 'RUNNING'
+          : 'ENDED',
+      timeUntilStart: isContestNotStarted
+        ? contest.startTime.getTime() - now.getTime()
+        : 0,
+      timeUntilEnd: isContestRunning
+        ? contest.endTime.getTime() - now.getTime()
+        : 0,
+    };
+
+    if (isCreator) {
+      const problems = await this.prisma.contestProblem.findMany({
+        where: { contestId },
+        orderBy: { order: 'asc' },
+        include: {
+          problem: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              difficulty: true,
+              tags: true,
+              acceptanceRate: true,
+              totalSubmissions: true,
+              acceptedSubmissions: true,
+              description: true,
+              constraints: true,
+              hints: true,
+            },
+          },
+        },
+      });
+
+      return {
+        ...baseResponse,
+        problems,
+        totalParticipants: contest._count.participations,
+      };
+    }
+
+    if (isParticipant) {
+      if (isContestNotStarted) {
+        return {
+          ...baseResponse,
+          message:
+            'Contest has not started yet. You will be able to see problems when the contest begins.',
+        };
+      }
+
+      const problems = await this.prisma.contestProblem.findMany({
+        where: { contestId },
+        orderBy: { order: 'asc' },
+        include: {
+          problem: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              difficulty: true,
+              tags: true,
+              acceptanceRate: true,
+              description: true,
+              constraints: true,
+              hints: true,
+            },
+          },
+        },
+      });
+
+      return {
+        ...baseResponse,
+        problems,
+      };
+    }
+
+    return {
+      ...baseResponse,
+      topParticipants: await this.prisma.contestParticipation.findMany({
+        where: { contestId },
+        orderBy: [{ score: 'desc' }, { penalty: 'asc' }],
+        take: 10,
+        select: {
+          score: true,
+          penalty: true,
+          rank: true,
+          user: {
+            select: {
+              username: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+            },
+          },
+        },
+      }),
+    };
   }
 
   // Get all contests with pagination and filters
@@ -185,6 +303,16 @@ export class ContestsService {
         pages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async getMyContests(userId: string) {
+    const contests = await this.prisma.contest.findMany({
+      where: {
+        createdBy: userId,
+      },
+    });
+
+    return contests;
   }
 
   // Update contest

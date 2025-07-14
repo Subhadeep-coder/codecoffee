@@ -107,8 +107,17 @@ export class ContestsController {
     status: 404,
     description: 'Contest not found',
   })
-  async getContestById(@Param('id') id: string) {
-    return this.contestService.getContestById(id);
+  @UseGuards(JwtAuthGuard)
+  async getContestById(@GetUser('id') userId: string, @Param('id') id: string) {
+    return this.contestService.getContestById(id, userId);
+  }
+
+  @ApiOperation({ summary: 'Get your created contest.' })
+  @ApiBearerAuth('JWT-auth')
+  @Get('/get/me')
+  @UseGuards(JwtAuthGuard)
+  async getMyProblems(@GetUser('id') userId: string) {
+    return this.contestService.getMyContests(userId);
   }
 
   @Put(':id')

@@ -92,6 +92,9 @@ export function Navbar() {
                     <Link href="/dashboard/problems">My Problems</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link href="/dashboard/contests">My Contests</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/submissions">My Submissions</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

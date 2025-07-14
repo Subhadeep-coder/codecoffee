@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
 import { Bookmark, BookmarkCheck, CheckCircle, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -119,11 +118,11 @@ export default function ProblemsPage() {
                         {problem.difficulty}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400">
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400">
                       {problem.category}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400">
-                      {problem.acceptance}%
+                      {problem.acceptanceRate}%
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {isAuthenticated && (
