@@ -41,7 +41,7 @@ export default function ProblemPage() {
 
         const slug = params.id as string;
         const response = await fetch(
-          `http://localhost:5000/api/v1/problems/${slug}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/problems/${slug}`,
         );
 
         if (!response.ok) {
