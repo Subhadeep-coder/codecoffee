@@ -25,7 +25,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ContestType } from '@prisma/client';
 import { ContestsService } from './contests.service';
 import { CreateContestDto } from './dto/create-contest.dto';
-import { GetUser } from 'src/common';
+import { GetUser } from '../common';
 import { ContestQueryDto } from './dto/contest-query.dto';
 import { UpdateContestDto } from './dto/update-contest.dto';
 

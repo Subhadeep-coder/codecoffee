@@ -63,4 +63,4 @@ import { StatsModule } from './stats/stats.module';
     // },
   ],
 })
-export class AppModule { }
+export class AppModule {}
