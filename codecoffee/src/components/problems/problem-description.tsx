@@ -129,31 +129,42 @@ export function ProblemDescription({ problem }: ProblemDescriptionProps) {
                 </div>
               );
             },
-            h2: ({ children }: { children: React.ReactNode }) => (
-              <h2 className="text-lg font-semibold text-foreground mt-6 mb-3">
+            h2: ({ children, ...props }) => (
+              <h2
+                className="text-lg font-semibold text-foreground mt-6 mb-3"
+                {...props}
+              >
                 {children}
               </h2>
             ),
-            h3: ({ children }: { children: React.ReactNode }) => (
-              <h3 className="text-base font-semibold text-foreground mt-4 mb-2">
+            h3: ({ children, ...props }) => (
+              <h3
+                className="text-base font-semibold text-foreground mt-4 mb-2"
+                {...props}
+              >
                 {children}
               </h3>
             ),
-            p: ({ children }: { children: React.ReactNode }) => (
-              <div className="text-foreground mb-4 leading-relaxed">
+            p: ({ children, ...props }) => (
+              <div className="text-foreground mb-4 leading-relaxed" {...props}>
                 {children}
               </div>
             ),
-            ul: ({ children }: { children: React.ReactNode }) => (
-              <ul className="list-disc list-inside text-foreground mb-4 space-y-1">
+            ul: ({ children, ...props }) => (
+              <ul
+                className="list-disc list-inside text-foreground mb-4 space-y-1"
+                {...props}
+              >
                 {children}
               </ul>
             ),
-            li: ({ children }: { children: React.ReactNode }) => (
-              <li className="text-foreground">{children}</li>
+            li: ({ children, ...props }) => (
+              <li className="text-foreground" {...props}>
+                {children}
+              </li>
             ),
-            strong: ({ children }: { children: React.ReactNode }) => (
-              <strong className="font-semibold text-foreground">
+            strong: ({ children, ...props }) => (
+              <strong className="font-semibold text-foreground" {...props}>
                 {children}
               </strong>
             ),

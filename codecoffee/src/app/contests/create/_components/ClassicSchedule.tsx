@@ -4,12 +4,12 @@ import React, { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Contest } from "@/types/contest";
+import { CreateContestDto } from "@/types/contest";
 import { DateRange } from "react-day-picker";
 
 interface ClassicScheduleProps {
-  contest: Contest;
-  setContest: React.Dispatch<React.SetStateAction<Contest>>;
+  contest: CreateContestDto;
+  setContest: React.Dispatch<React.SetStateAction<CreateContestDto>>;
 }
 
 export const ClassicSchedule = ({

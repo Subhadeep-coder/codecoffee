@@ -229,7 +229,7 @@ export function CodeEditor({
 
             if (!resultResponse) {
               throw new Error(
-                `Failed to get submission result: ${resultResponse.status}`,
+                `Failed to get submission result: ${resultResponse}`,
               );
             }
 

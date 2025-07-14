@@ -26,7 +26,7 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
           {
             language: "JavaScript",
             template: "",
-            identifier: "javascript-starter",
+            templateIdentifier: "javascript-starter",
           },
         ],
       }));
@@ -54,7 +54,7 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
         {
           language: nextLanguage,
           template: "",
-          identifier: defaultIdentifier,
+          templateIdentifier: defaultIdentifier,
         },
       ],
     }));
@@ -103,7 +103,7 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
   const validateIdentifier = (identifier: string) => {
     // Check if identifier is unique
     const identifiers =
-      problem.problemTemplates?.map((t) => t.identifier) || [];
+      problem.problemTemplates?.map((t) => t.templateIdentifier) || [];
     const count = identifiers.filter((id) => id === identifier).length;
     return count <= 1;
   };
@@ -167,7 +167,11 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
                       const newIdentifier =
                         e.target.value.toLowerCase().replace(/\s+/g, "-") +
                         "-starter";
-                      updateTemplate(index, "identifier", newIdentifier);
+                      updateTemplate(
+                        index,
+                        "templateIdentifier",
+                        newIdentifier,
+                      );
                     }}
                     className="w-full rounded-md border border-gray-200 dark:border-gray-800 bg-white dark:bg-black text-black dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                   >
@@ -185,19 +189,19 @@ export function TemplatesTab({ problem, setProblem }: TemplatesTabProps) {
                     Template Identifier
                   </Label>
                   <Input
-                    value={template.identifier || ""}
+                    value={template.templateIdentifier || ""}
                     onChange={(e) => {
                       const formatted = formatIdentifier(e.target.value);
-                      updateTemplate(index, "identifier", formatted);
+                      updateTemplate(index, "templateIdentifier", formatted);
                     }}
                     placeholder="e.g., javascript-starter"
                     className={`${
-                      !validateIdentifier(template.identifier || "")
+                      !validateIdentifier(template.templateIdentifier || "")
                         ? "border-red-500 focus:ring-red-500"
                         : ""
                     }`}
                   />
-                  {!validateIdentifier(template.identifier || "") && (
+                  {!validateIdentifier(template.templateIdentifier || "") && (
                     <p className="text-red-500 text-xs mt-1">
                       Identifier must be unique
                     </p>

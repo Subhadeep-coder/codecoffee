@@ -74,9 +74,9 @@ export default function ContestPage() {
 
       if (timeDiff <= 0) {
         if (contest.contestStatus === "NOT_STARTED") {
-          setContest((prev) => ({ ...prev, contestStatus: "RUNNING" }));
+          setContest((prev: any) => ({ ...prev, contestStatus: "RUNNING" }));
         } else {
-          setContest((prev) => ({ ...prev, contestStatus: "ENDED" }));
+          setContest((prev: any) => ({ ...prev, contestStatus: "ENDED" }));
         }
         return;
       }
@@ -328,7 +328,7 @@ export default function ContestPage() {
                           </p>
 
                           <div className="flex flex-wrap gap-2 mb-3">
-                            {contestProblem.problem.tags.map((tag) => (
+                            {contestProblem.problem.tags.map((tag: string) => (
                               <Badge
                                 key={tag}
                                 variant="secondary"
