@@ -1,192 +1,182 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   Query,
   UseGuards,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { ProblemsService } from './problems.service';
-import {
-  CreateProblemDto,
-  UpdateProblemDto,
-  CreateTestCaseDto,
-  UpdateTestCaseDto,
-  CreateBoilerplateDto,
-  UpdateBoilerplateDto,
-  CreateReviewDto,
-  UpdateReviewDto,
-  ProblemQueryDto,
-} from './dto/problem.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Language } from 'generated/prisma';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetUser } from 'src/common';
+import { CreateProblemsDto } from './dto';
+import {
+  ApiParam,
+  ApiTags,
+  ApiOperation,
+  ApiQuery,
+  ApiBearerAuth,
+  ApiBody,
+  ApiResponse,
+} from '@nestjs/swagger';
 
+@ApiTags('problems')
 @Controller('problems')
 export class ProblemsController {
-  constructor(private readonly problemsService: ProblemsService) { }
+  constructor(private readonly problemsService: ProblemsService) {}
 
-  @Post()
-  @UseGuards(JwtAuthGuard)
-  async create(
-    @Body() createProblemDto: CreateProblemDto,
-    @GetUser() user: any,
+  @Get('/')
+  @ApiOperation({
+    summary: 'Get a paginated list of problems with filters and sorting.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: String,
+    description: 'Page number for pagination.',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: String,
+    description: 'Number of problems per page.',
+  })
+  @ApiQuery({
+    name: 'difficulty',
+    required: false,
+    type: String,
+    description: 'Filter by difficulty.',
+  })
+  @ApiQuery({
+    name: 'tags',
+    required: false,
+    type: String,
+    description: 'Filter by tags (comma-separated).',
+  })
+  @ApiQuery({
+    name: 'company',
+    required: false,
+    type: String,
+    description: 'Filter by company.',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search term for problem title/description.',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    type: String,
+    description: 'Field to sort by.',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    type: String,
+    description: 'Sort order (asc or desc).',
+  })
+  @ApiQuery({
+    name: 'showPremium',
+    required: false,
+    type: String,
+    description: 'Whether to include premium problems.',
+  })
+  @ApiResponse({ status: 200, description: 'Paginated list of problems.' })
+  getProblems(
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+    @Query('difficulty') difficulty: string,
+    @Query('tags') tags: string,
+    @Query('search') search: string,
+    @Query('company') company: string,
+    @Query('sortBy') sortBy: string,
+    @Query('sortOrder') sortOrder: string,
+    @Query('showPremium') showPremium: string,
   ) {
-    return this.problemsService.createProblem(createProblemDto, user.id);
+    return this.problemsService.getProblems({
+      page,
+      limit,
+      difficulty,
+      tags,
+      company,
+      search,
+      sortBy,
+      sortOrder,
+      showPremium,
+    });
   }
 
-  @Get()
-  async findAll(@Query() query: ProblemQueryDto, @GetUser() user?: any) {
-    return this.problemsService.findAllProblems(query, user?.id);
+  @ApiOperation({ summary: 'Get a problem by its slug.' })
+  @ApiParam({
+    name: 'slug',
+    type: String,
+    description: 'The unique slug of the problem.',
+  })
+  @ApiResponse({ status: 200, description: 'Problem details.' })
+  @Get('/:slug')
+  getProblemById(@Param('slug') slug: string) {
+    return this.problemsService.getProblemById(slug);
   }
 
-  @Get('stats')
-  async getStats() {
-    return this.problemsService.getProblemStats();
-  }
-
-  @Get('tags')
-  async getPopularTags() {
-    return this.problemsService.getPopularTags();
-  }
-
-  @Get(':id')
-  async findOne(@Param('id') id: string, @GetUser() user?: any) {
-    return this.problemsService.findProblemById(id, user?.id);
-  }
-
-  @Patch(':id')
+  @ApiOperation({ summary: 'Get your created problem.' })
+  @ApiBearerAuth('JWT-auth')
+  @Get('/get/me')
   @UseGuards(JwtAuthGuard)
-  async update(
-    @Param('id') id: string,
-    @Body() updateProblemDto: UpdateProblemDto,
-    @GetUser() user: any,
+  getMyProblems(@GetUser('id') userId: string) {
+    return this.problemsService.getMyProblems(userId);
+  }
+
+  @ApiOperation({ summary: 'Create a new problem.' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiBody({ type: CreateProblemsDto })
+  @ApiResponse({ status: 201, description: 'The created problem.' })
+  @Post('/create')
+  @UseGuards(JwtAuthGuard)
+  createProblem(
+    @GetUser('id') userId: string,
+    @Body() body: CreateProblemsDto,
   ) {
-    return this.problemsService.updateProblem(id, updateProblemDto, user.id);
+    return this.problemsService.createProblem(userId, body);
   }
 
-  @Delete(':id')
+  @ApiOperation({ summary: 'Update an existing problem.' })
+  @ApiBearerAuth()
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'The ID of the problem to update.',
+  })
+  @ApiBody({ description: 'Partial problem data', type: Object })
+  @ApiResponse({ status: 200, description: 'The updated problem.' })
+  @Patch('/update/:id')
   @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string, @GetUser() user: any) {
-    return this.problemsService.deleteProblem(id, user.id);
-  }
-
-  // Test Cases endpoints
-  @Post(':id/test-cases')
-  @UseGuards(JwtAuthGuard)
-  async addTestCase(
+  updateProblem(
+    @GetUser('id') userId: string,
     @Param('id') problemId: string,
-    @Body() createTestCaseDto: CreateTestCaseDto,
-    @GetUser() user: any,
+    @Body() body: any,
   ) {
-    return this.problemsService.addTestCase(problemId, createTestCaseDto, user.id);
+    return this.problemsService.updateProblem(userId, problemId, body);
   }
 
-  @Patch('test-cases/:testCaseId')
+  @ApiOperation({ summary: 'Delete a problem.' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'The ID of the problem to delete.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Success message or deleted problem info.',
+  })
+  @Delete('/delete/:id')
   @UseGuards(JwtAuthGuard)
-  async updateTestCase(
-    @Param('testCaseId') testCaseId: string,
-    @Body() updateTestCaseDto: UpdateTestCaseDto,
-    @GetUser() user: any,
-  ) {
-    return this.problemsService.updateTestCase(testCaseId, updateTestCaseDto, user.id);
-  }
-
-  @Delete('test-cases/:testCaseId')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteTestCase(
-    @Param('testCaseId') testCaseId: string,
-    @GetUser() user: any,
-  ) {
-    return this.problemsService.deleteTestCase(testCaseId, user.id);
-  }
-
-  // Boilerplates endpoints
-  @Post(':id/boilerplates')
-  @UseGuards(JwtAuthGuard)
-  async addBoilerplate(
-    @Param('id') problemId: string,
-    @Body() createBoilerplateDto: CreateBoilerplateDto,
-    @GetUser() user: any,
-  ) {
-    return this.problemsService.addBoilerplate(problemId, createBoilerplateDto, user.id);
-  }
-
-  @Patch(':id/boilerplates/:language')
-  @UseGuards(JwtAuthGuard)
-  async updateBoilerplate(
-    @Param('id') problemId: string,
-    @Param('language') language: Language,
-    @Body() updateBoilerplateDto: UpdateBoilerplateDto,
-    @GetUser() user: any,
-  ) {
-    return this.problemsService.updateBoilerplate(
-      problemId,
-      language,
-      updateBoilerplateDto,
-      user.id,
-    );
-  }
-
-  @Delete(':id/boilerplates/:language')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteBoilerplate(
-    @Param('id') problemId: string,
-    @Param('language') language: Language,
-    @GetUser() user: any,
-  ) {
-    return this.problemsService.deleteBoilerplate(problemId, language, user.id);
-  }
-
-  // Reviews endpoints
-  @Post(':id/reviews')
-  @UseGuards(JwtAuthGuard)
-  async createReview(
-    @Param('id') problemId: string,
-    @Body() createReviewDto: CreateReviewDto,
-    @GetUser() user: any,
-  ) {
-    return this.problemsService.createReview(problemId, createReviewDto, user.id);
-  }
-
-  @Get(':id/reviews')
-  async getReviews(
-    @Param('id') problemId: string,
-    @Query('page') page: string = '1',
-    @Query('limit') limit: string = '10',
-  ) {
-    return this.problemsService.getProblemReviews(
-      problemId,
-      parseInt(page),
-      parseInt(limit),
-    );
-  }
-
-  @Patch(':id/reviews')
-  @UseGuards(JwtAuthGuard)
-  async updateReview(
-    @Param('id') problemId: string,
-    @Body() updateReviewDto: UpdateReviewDto,
-    @GetUser() user: any,
-  ) {
-    return this.problemsService.updateReview(problemId, updateReviewDto, user.id);
-  }
-
-  @Delete(':id/reviews')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteReview(
-    @Param('id') problemId: string,
-    @GetUser() user: any,
-  ) {
-    return this.problemsService.deleteReview(problemId, user.id);
+  deleteProblem(@GetUser('id') userId: string, @Param('id') problemId: string) {
+    return this.problemsService.deleteProblem(userId, problemId);
   }
 }

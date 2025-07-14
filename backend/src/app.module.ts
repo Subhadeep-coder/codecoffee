@@ -13,6 +13,7 @@ import { JudgeModule } from './judge/judge.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { ReviewModule } from './review/review.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -21,28 +22,27 @@ import { NotificationsModule } from './notifications/notifications.module';
       envFilePath: ['../.env.local', '../.env'],
       validationSchema: null,
     }),
-    ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => [
-        {
-          name: 'short',
-          ttl: 1000,
-          limit: 3,
-        },
-        {
-          name: 'medium',
-          ttl: 10000,
-          limit: 20,
-        },
-        {
-          name: 'long',
-          ttl: 60000,
-          limit: 100,
-        },
-      ],
-    }),
-
+    // ThrottlerModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   inject: [ConfigService],
+    //   useFactory: (configService: ConfigService) => [
+    //     {
+    //       name: 'short',
+    //       ttl: 1000,
+    //       limit: 3,
+    //     },
+    //     {
+    //       name: 'medium',
+    //       ttl: 10000,
+    //       limit: 20,
+    //     },
+    //     {
+    //       name: 'long',
+    //       ttl: 60000,
+    //       limit: 100,
+    //     },
+    //   ],
+    // }),
     PrismaModule,
     AuthModule,
     ProblemsModule,
@@ -53,13 +53,14 @@ import { NotificationsModule } from './notifications/notifications.module';
     LeaderboardModule,
     ReviewModule,
     NotificationsModule,
+    StatsModule,
   ],
   providers: [
     // Global rate limiting
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: ThrottlerGuard,
+    // },
   ],
 })
 export class AppModule { }

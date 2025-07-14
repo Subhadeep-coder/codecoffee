@@ -10,18 +10,19 @@ import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { GithubStrategy } from './strategies/github.strategy';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 
 @Module({
   imports: [
     PassportModule,
     PrismaModule,
-    UsersModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m'),
+          expiresIn: configService.get<string>('JWT_ACCESS_EXPIRES_IN', '5m'),
         },
       }),
       inject: [ConfigService],
@@ -34,7 +35,8 @@ import { GithubStrategy } from './strategies/github.strategy';
     JwtRefreshStrategy,
     GoogleStrategy,
     GithubStrategy,
+    JwtAuthGuard,
+    JwtRefreshGuard,
   ],
-  exports: [AuthService],
 })
 export class AuthModule { }

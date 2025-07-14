@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import { swaggerConfig } from '../docs/swagger.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -48,35 +49,13 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
 
   // Swagger/OpenAPI documentation
-  if (configService.get<string>('NODE_ENV') !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('Authentication API')
-      .setDescription('JWT-based authentication system with OAuth integration')
-      .setVersion('1.0')
-      .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          name: 'JWT',
-          description: 'Enter JWT token',
-          in: 'header',
-        },
-        'JWT-auth', // This name here is important for matching up with @ApiBearerAuth() in your controllers
-      )
-      .addTag('Authentication', 'Authentication endpoints')
-      .addTag('Users', 'User management endpoints')
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document, {
-      swaggerOptions: {
-        persistAuthorization: true, // Keep authorization after page refresh
-      },
-    });
-
-    console.log('📚 Swagger documentation available at: http://localhost:3000/api/docs');
-  }
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+    customSiteTitle: 'CodeCoffee API Documentation'
+  });
 
   process.on('SIGTERM', () => {
     console.log('SIGTERM received, shutting down gracefully');
