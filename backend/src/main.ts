@@ -3,7 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { swaggerConfig } from '../docs/swagger.config';
 
@@ -11,9 +11,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  app.use(helmet({
-    crossOriginEmbedderPolicy: false,
-  }));
+  app.use(
+    helmet({
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   app.use(cookieParser());
 
@@ -54,7 +56,7 @@ async function bootstrap() {
     swaggerOptions: {
       persistAuthorization: true,
     },
-    customSiteTitle: 'CodeCoffee API Documentation'
+    customSiteTitle: 'CodeCoffee API Documentation',
   });
 
   process.on('SIGTERM', () => {
@@ -71,8 +73,12 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
 
   console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`🔐 Auth endpoints available at: http://localhost:${port}/api/v1/auth`);
-  console.log(`📱 Environment: ${configService.get<string>('NODE_ENV', 'development')}`);
+  console.log(
+    `🔐 Auth endpoints available at: http://localhost:${port}/api/v1/auth`,
+  );
+  console.log(
+    `📱 Environment: ${configService.get<string>('NODE_ENV', 'development')}`,
+  );
 }
 
 bootstrap().catch((error) => {
