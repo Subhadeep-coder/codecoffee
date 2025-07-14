@@ -2,7 +2,7 @@ import { Controller, Get, Put, Body, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateUserProfileDto } from './dto/update-user.dto';
-import { GetUser } from 'src/common';
+import { GetUser } from '../common';
 import {
   ApiBearerAuth,
   ApiOperation,

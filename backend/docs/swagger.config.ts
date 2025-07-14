@@ -2,7 +2,9 @@ import { DocumentBuilder } from '@nestjs/swagger';
 
 export const swaggerConfig = new DocumentBuilder()
   .setTitle('CodeCoffee API Documentation')
-  .setDescription('API documentation for the CodeCoffee platform\'s authentication module')
+  .setDescription(
+    "API documentation for the CodeCoffee platform's authentication module",
+  )
   .setVersion('1.0')
   .addTag('auth', 'Authentication endpoints')
   .addBearerAuth(

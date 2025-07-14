@@ -28,7 +28,7 @@ import { api } from "@/lib/axios";
 export default function ContestPage() {
   const params = useParams();
   const router = useRouter();
-  const [contest, setContest] = useState(null);
+  const [contest, setContest] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -74,9 +74,9 @@ export default function ContestPage() {
 
       if (timeDiff <= 0) {
         if (contest.contestStatus === "NOT_STARTED") {
-          setContest((prev) => ({ ...prev, contestStatus: "RUNNING" }));
+          setContest((prev: any) => ({ ...prev, contestStatus: "RUNNING" }));
         } else {
-          setContest((prev) => ({ ...prev, contestStatus: "ENDED" }));
+          setContest((prev: any) => ({ ...prev, contestStatus: "ENDED" }));
         }
         return;
       }
@@ -296,59 +296,62 @@ export default function ContestPage() {
               <CardContent>
                 {contest.canViewProblems ? (
                   <div className="space-y-4">
-                    {contest.problems?.map((contestProblem, index) => (
-                      <div
-                        key={contestProblem.id}
-                        className="border border-gray-200 rounded-lg p-4"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <span className="font-semibold text-gray-900">
-                              {String.fromCharCode(65 + index)}.{" "}
-                              {contestProblem.problem.title}
+                    {contest.problems?.map(
+                      (contestProblem: any, index: number) => (
+                        <div
+                          key={contestProblem.id}
+                          className="border border-gray-200 rounded-lg p-4"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-3">
+                              <span className="font-semibold text-gray-900">
+                                {String.fromCharCode(65 + index)}.{" "}
+                                {contestProblem.problem.title}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={getDifficultyColor(
+                                  contestProblem.problem.difficulty,
+                                )}
+                              >
+                                {contestProblem.problem.difficulty}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {contestProblem.problem.acceptanceRate}%
+                              acceptance
+                            </div>
+                          </div>
+
+                          <p className="text-gray-600 mb-3">
+                            {contestProblem.problem.description}
+                          </p>
+
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {contestProblem.problem.tags.map((tag: string) => (
+                              <Badge
+                                key={tag}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <span>
+                              {contestProblem.problem.acceptedSubmissions} /{" "}
+                              {contestProblem.problem.totalSubmissions}{" "}
+                              submissions
                             </span>
-                            <Badge
-                              variant="outline"
-                              className={getDifficultyColor(
-                                contestProblem.problem.difficulty,
-                              )}
-                            >
-                              {contestProblem.problem.difficulty}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {contestProblem.problem.acceptanceRate}% acceptance
+                            <Button variant="outline" size="sm">
+                              Solve Problem
+                            </Button>
                           </div>
                         </div>
-
-                        <p className="text-gray-600 mb-3">
-                          {contestProblem.problem.description}
-                        </p>
-
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {contestProblem.problem.tags.map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <span>
-                            {contestProblem.problem.acceptedSubmissions} /{" "}
-                            {contestProblem.problem.totalSubmissions}{" "}
-                            submissions
-                          </span>
-                          <Button variant="outline" size="sm">
-                            Solve Problem
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
@@ -435,45 +438,47 @@ export default function ContestPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {contest.topParticipants.map((participant, index) => (
-                        <div
-                          key={participant.user.username}
-                          className="flex items-center justify-between"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <span className="font-semibold text-gray-900 w-6">
-                              #{participant.rank}
-                            </span>
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage
-                                src={participant.user.avatar}
-                                alt={participant.user.username}
-                              />
-                              <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
-                                {participant.user.firstName || ""}
-                                {participant.user.lastName || ""}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {participant.user.firstName}{" "}
-                                {participant.user.lastName}
+                      {contest.topParticipants.map(
+                        (participant: any, _: number) => (
+                          <div
+                            key={participant.user.username}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <span className="font-semibold text-gray-900 w-6">
+                                #{participant.rank}
+                              </span>
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage
+                                  src={participant.user.avatar}
+                                  alt={participant.user.username}
+                                />
+                                <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
+                                  {participant.user.firstName || ""}
+                                  {participant.user.lastName || ""}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {participant.user.firstName}{" "}
+                                  {participant.user.lastName}
+                                </p>
+                                <p className="text-xs text-gray-600">
+                                  @{participant.user.username}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold text-gray-900">
+                                {participant.score}
                               </p>
                               <p className="text-xs text-gray-600">
-                                @{participant.user.username}
+                                -{participant.penalty}min
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-gray-900">
-                              {participant.score}
-                            </p>
-                            <p className="text-xs text-gray-600">
-                              -{participant.penalty}min
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                        ),
+                      )}
                     </div>
                   </CardContent>
                 </Card>

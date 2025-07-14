@@ -21,20 +21,20 @@ import {
 } from './dto';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { GetUser } from 'src/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
+import { GetUser } from '../common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
   ApiBearerAuth,
   ApiBody,
-  ApiParam 
+  ApiParam,
 } from '@nestjs/swagger';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -48,15 +48,15 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiBody({ type: LoginDto })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Login successful',
     schema: {
       properties: {
         accessToken: { type: 'string' },
-        refreshToken: { type: 'string' }
-      }
-    }
+        refreshToken: { type: 'string' },
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async login(@Body() loginDto: LoginDto) {
@@ -67,15 +67,15 @@ export class AuthController {
   @UseGuards(JwtRefreshGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Refresh access token using refresh token' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Token refresh successful',
     schema: {
       properties: {
         accessToken: { type: 'string' },
-        refreshToken: { type: 'string' }
-      }
-    }
+        refreshToken: { type: 'string' },
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async refreshTokens(@Req() req) {
@@ -146,7 +146,11 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Unlink a social account from user' })
-  @ApiParam({ name: 'provider', enum: ['google', 'github'], description: 'Social provider to unlink' })
+  @ApiParam({
+    name: 'provider',
+    enum: ['google', 'github'],
+    description: 'Social provider to unlink',
+  })
   @ApiResponse({ status: 200, description: 'Account successfully unlinked' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async unlinkAccount(

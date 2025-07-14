@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateContestDto } from './dto/create-contest.dto';
 import { ContestType, Prisma, SubmissionStatus } from '@prisma/client';
 import { UpdateContestDto } from './dto/update-contest.dto';

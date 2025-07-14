@@ -282,7 +282,7 @@ export function ProblemPreview({ problem }: ProblemPreviewProps) {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{template.language}</Badge>
-                    {template.identifier && (
+                    {template.templateIdentifier && (
                       <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                         <Hash className="h-3 w-3" />
                         <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">

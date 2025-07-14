@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import {
   ApiTags,
@@ -8,8 +16,8 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { GetUser } from 'src/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { GetUser } from '../common';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 
 @ApiTags('submissions')
@@ -20,13 +28,15 @@ export class SubmissionsController {
   @Post('create')
   @ApiOperation({
     summary: 'Submit or run code for a problem',
-    description: 'Run mode only executes visible test cases, Submit mode runs all test cases',
+    description:
+      'Run mode only executes visible test cases, Submit mode runs all test cases',
   })
   @ApiQuery({
     name: 'mode',
     required: false,
     enum: ['run', 'submit'],
-    description: 'Execution mode - run (sample test cases) or submit (all test cases)',
+    description:
+      'Execution mode - run (sample test cases) or submit (all test cases)',
   })
   @ApiBody({
     schema: {
